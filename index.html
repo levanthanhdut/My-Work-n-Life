@@ -133,6 +133,11 @@
   .kcard { background:var(--card); border-radius:12px; padding:10px; margin-bottom:8px; box-shadow:0 1px 2px var(--shadow); cursor:grab; border-left:4px solid var(--primary); }
   .kcard.overdue { border-left-color:var(--danger); }
   .kcard .t { font-weight:600; margin-bottom:6px; overflow-wrap:anywhere; word-break:break-word; }
+  .field { position:relative; flex:1 1 140px; min-width:140px; display:flex; }
+  .field input { flex:1; width:100%; padding-right:30px; }
+  .clear-btn { position:absolute; right:4px; top:50%; transform:translateY(-50%); background:transparent; color:var(--muted); border:none; padding:2px 6px; min-height:0; line-height:1; font-size:1rem; }
+  .clear-btn:hover { opacity:1; color:var(--text); }
+  .clear-btn[hidden] { display:none; }
   .drag-handle { cursor:grab; color:var(--muted); margin-right:6px; user-select:none; padding:0 2px; }
   .kcard .meta { display:flex; gap:6px; flex-wrap:wrap; align-items:center; font-size:.78rem; color:var(--muted); }
   .kcard .n { font-size:.82rem; color:var(--muted); margin-top:6px; white-space:pre-wrap; }
@@ -251,9 +256,9 @@
     <h2 id="formTitle">➕ Thêm công việc mới</h2>
     <div class="row">
       <input id="title" data-i18n-ph="titlePh" style="flex:2">
-      <input id="project" list="projectList" data-i18n-ph="projectPh">
+      <span class="field"><input id="project" list="projectList" data-i18n-ph="projectPh"><button type="button" id="clearProject" class="clear-btn" title="✕" hidden>✕</button></span>
       <datalist id="projectList"></datalist>
-      <input id="subProject" list="subProjectList" data-i18n-ph="subPh">
+      <span class="field"><input id="subProject" list="subProjectList" data-i18n-ph="subPh"><button type="button" id="clearSub" class="clear-btn" title="✕" hidden>✕</button></span>
       <datalist id="subProjectList"></datalist>
       <select id="status">
         <option value="Chưa làm" data-i18n="st_todo"></option>
@@ -856,7 +861,25 @@
     $('formTitle').textContent = L('formNew');
   }
 
+  function toggleClear() {
+    $('clearProject').hidden = !$('project').value;
+    $('clearSub').hidden = !$('subProject').value;
+  }
+  $('clearProject').onclick = () => {
+    $('project').value = '';
+    refreshProjectOptions();
+    toggleClear();
+    $('project').focus();
+  };
+  $('clearSub').onclick = () => {
+    $('subProject').value = '';
+    toggleClear();
+    $('subProject').focus();
+  };
+  $('subProject').addEventListener('input', toggleClear);
+
   function openModal() {
+    toggleClear();
     $('modal').style.display = 'flex';
     setTimeout(() => $('title').focus(), 0);
   }
@@ -999,7 +1022,7 @@
   $('filterStatus').onchange = render;
   $('filterProject').onchange = () => { $('filterSub').value = ''; render(); };
   $('filterSub').onchange = render;
-  $('project').oninput = refreshProjectOptions;
+  $('project').oninput = () => { refreshProjectOptions(); toggleClear(); };
 
   // ===== CHỦ ĐỀ GIAO DIỆN =====
   const THEMES = ['minimal', 'dark', 'indigo', 'ocean', 'warm'];
