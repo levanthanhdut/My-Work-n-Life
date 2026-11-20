@@ -257,6 +257,12 @@
         <option value="Trung" selected data-i18n="pr_mid"></option>
         <option value="Thấp" data-i18n="pr_low"></option>
       </select>
+      <select id="repeat" data-i18n-title="repeatLabel" style="max-width:170px">
+        <option value="" data-i18n="rep_none"></option>
+        <option value="daily" data-i18n="rep_daily"></option>
+        <option value="weekly" data-i18n="rep_weekly"></option>
+        <option value="monthly" data-i18n="rep_monthly"></option>
+      </select>
       <input id="startDate" type="date" data-i18n-title="startDate">
       <input id="deadline" type="date" data-i18n-title="deadline">
     </div>
@@ -302,7 +308,7 @@
       signOut:'Đăng xuất', loginNotConfigured:'Chưa cấu hình Google Client ID trong file.',
       sync_expired:'⚠️ Phiên đăng nhập đã hết hạn, đang làm mới...',
       addTask:'+ Thêm công việc', sheetBtn:'⚙️ Google Sheet', themeTitle:'Đổi giao diện',
-      searchPh:'🔍 Tìm theo tên hoặc ghi chú', allStatus:'Tất cả trạng thái', allProjects:'Tất cả dự án', allSubs:'Tất cả sub-project', subPh:'Sub-project (tùy chọn)',
+      searchPh:'🔍 Tìm theo tên hoặc ghi chú', allStatus:'Tất cả trạng thái', allProjects:'Tất cả dự án', allSubs:'Tất cả sub-project', subPh:'Sub-project (tùy chọn)', repeatLabel:'Lặp lại', rep_none:'Không lặp', rep_daily:'Hàng ngày', rep_weekly:'Hàng tuần', rep_monthly:'Hàng tháng',
       st_todo:'Chưa làm', st_doing:'Đang làm', st_done:'Hoàn thành',
       pr_high:'Cao', pr_mid:'Trung', pr_low:'Thấp', noProject:'Chưa phân loại',
       projectProgress:'📁 Tiến độ theo dự án', noProjects:'Chưa có dự án nào',
@@ -335,7 +341,7 @@
       signOut:'Sign out', loginNotConfigured:'Google Client ID is not configured in the file.',
       sync_expired:'⚠️ Session expired, refreshing...',
       addTask:'+ Add task', sheetBtn:'⚙️ Google Sheet', themeTitle:'Change theme',
-      searchPh:'🔍 Search by name or notes', allStatus:'All statuses', allProjects:'All projects', allSubs:'All sub-projects', subPh:'Sub-project (optional)',
+      searchPh:'🔍 Search by name or notes', allStatus:'All statuses', allProjects:'All projects', allSubs:'All sub-projects', subPh:'Sub-project (optional)', repeatLabel:'Repeat', rep_none:'No repeat', rep_daily:'Daily', rep_weekly:'Weekly', rep_monthly:'Monthly',
       st_todo:'To do', st_doing:'In progress', st_done:'Done',
       pr_high:'High', pr_mid:'Medium', pr_low:'Low', noProject:'Uncategorized',
       projectProgress:'📁 Project progress', noProjects:'No projects yet',
@@ -396,6 +402,7 @@
       ...t,
       project: (t.project || '').trim(),
       subProject: (t.subProject || '').trim(),
+      repeat: t.repeat || '',
       startDate: t.startDate ? String(t.startDate).slice(0,10) : '',
       deadline: t.deadline ? String(t.deadline).slice(0,10) : ''
     };
@@ -541,7 +548,7 @@
         <div class="ti-meta">
           <span class="badge">${esc(pName(projectOf(t)))}</span>${t.subProject ? `<span class="badge">↳ ${esc(t.subProject)}</span>` : ''}
           <span class="badge ${sClass[t.status] || ''}">${esc(sLabel(t.status))}</span>
-          <span class="badge p-${esc(t.priority)}">${esc(pLabel(t.priority))}</span>
+          <span class="badge p-${esc(t.priority)}">${esc(pLabel(t.priority))}</span>${t.repeat ? `<span class="badge">${repLabel(t.repeat)}</span>` : ''}
           <span class="ti-deadline">${t.deadline ? '📅 ' + esc(t.deadline) : L('noDeadline')}</span>
         </div>
         <div class="ti-actions">
@@ -563,7 +570,7 @@
           <div class="t">${esc(t.title)}</div>
           <div class="meta">
             <span class="badge">${esc(pName(projectOf(t)))}</span>${t.subProject ? `<span class="badge">↳ ${esc(t.subProject)}</span>` : ''}
-            <span class="badge p-${esc(t.priority)}">${esc(pLabel(t.priority))}</span>
+            <span class="badge p-${esc(t.priority)}">${esc(pLabel(t.priority))}</span>${t.repeat ? `<span class="badge">${repLabel(t.repeat)}</span>` : ''}
             <span class="${isOverdue(t) ? 'overdue-text' : ''}" style="${isOverdue(t) ? 'color:var(--danger);font-weight:600' : ''}">
               ${t.deadline ? '📅 ' + esc(t.deadline) : ''}
             </span>
@@ -709,9 +716,36 @@
       </div>`;
   }
 
+  // ===== CÔNG VIỆC LẶP LẠI =====
+  // Khi một việc lặp lại được đánh dấu Hoàn thành, tạo sẵn việc cho kỳ tiếp theo
+  const spawned = new Set(JSON.parse(localStorage.getItem('spawnedIds') || '[]'));
+  function shiftDate(str, rep) {
+    if (!str) return '';
+    const [y, m, d] = str.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    if (rep === 'daily') dt.setUTCDate(dt.getUTCDate() + 1);
+    else if (rep === 'weekly') dt.setUTCDate(dt.getUTCDate() + 7);
+    else if (rep === 'monthly') dt.setUTCMonth(dt.getUTCMonth() + 1);
+    return dt.toISOString().slice(0, 10);
+  }
+  function maybeSpawn(prev, newStatus) {
+    if (newStatus !== 'Hoàn thành' || prev.status === 'Hoàn thành' || !prev.repeat || spawned.has(prev.id)) return;
+    spawned.add(prev.id);
+    localStorage.setItem('spawnedIds', JSON.stringify([...spawned]));
+    tasks.push({
+      ...prev,
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      status: 'Chưa làm',
+      startDate: shiftDate(prev.startDate, prev.repeat),
+      deadline: shiftDate(prev.deadline, prev.repeat),
+      updatedAt: new Date().toISOString()
+    });
+  }
+  const repLabel = r => (r ? '🔁 ' + L('rep_' + r) : '');
+
   function resetForm() {
     editingId = null;
-    $('title').value = ''; $('notes').value = ''; $('deadline').value = ''; $('startDate').value = ''; $('project').value = ''; $('subProject').value = '';
+    $('title').value = ''; $('notes').value = ''; $('deadline').value = ''; $('startDate').value = ''; $('project').value = ''; $('subProject').value = ''; $('repeat').value = '';
     $('status').value = 'Chưa làm'; $('priority').value = 'Trung';
     $('submit').textContent = L('add');
     $('formTitle').textContent = L('formNew');
@@ -749,6 +783,7 @@
       title,
       project: $('project').value.trim(),
       subProject: $('subProject').value.trim(),
+      repeat: $('repeat').value,
       status: $('status').value,
       priority: $('priority').value,
       startDate: $('startDate').value,
@@ -757,7 +792,9 @@
       updatedAt: new Date().toISOString()
     };
     if (editingId) {
+      const prev = tasks.find(t => t.id === editingId);
       tasks = tasks.map(t => t.id === editingId ? { ...t, ...data } : t);
+      if (prev) maybeSpawn(prev, data.status);
     } else {
       tasks.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), ...data });
     }
@@ -773,7 +810,7 @@
     const t = tasks.find(x => x.id === id);
     if (!t) return;
     editingId = id;
-    $('title').value = t.title; $('project').value = t.project || ''; $('subProject').value = t.subProject || '';
+    $('title').value = t.title; $('project').value = t.project || ''; $('subProject').value = t.subProject || ''; $('repeat').value = t.repeat || '';
     $('notes').value = t.notes || ''; $('deadline').value = t.deadline || '';
     $('startDate').value = t.startDate || '';
     $('status').value = t.status; $('priority').value = t.priority;
@@ -783,7 +820,9 @@
   };
 
   window.changeStatus = (id, status) => {
+    const prev = tasks.find(t => t.id === id);
     tasks = tasks.map(t => t.id === id ? { ...t, status, updatedAt: new Date().toISOString() } : t);
+    if (prev) maybeSpawn(prev, status);
     persist();
   };
 
