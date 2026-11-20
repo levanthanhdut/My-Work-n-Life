@@ -104,6 +104,9 @@
   .g-months > div { height:100%; display:flex; align-items:center; padding-left:6px; font-weight:600; border-right:1px solid var(--border); overflow:hidden; white-space:nowrap; flex:0 0 auto; }
   .g-days > div { flex:0 0 auto; text-align:center; border-right:1px solid var(--border); }
   .g-days .we { background:var(--track); }
+  .g-wdays { display:flex; height:18px; align-items:center; font-size:.66rem; color:var(--muted); }
+  .g-wdays > div { flex:0 0 auto; text-align:center; border-right:1px solid var(--border); }
+  .g-wdays .we { background:var(--track); }
   .g-bar { position:absolute; top:7px; height:24px; border-radius:7px; color:#fff; font-size:.75rem; line-height:24px; padding:0 6px; overflow:hidden; white-space:nowrap; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,.15); }
   .g-bar:hover { opacity:.85; }
   .g-bar { cursor:grab; touch-action:none; user-select:none; }
@@ -137,6 +140,9 @@
   .kcard { background:var(--card); border-radius:12px; padding:10px; margin-bottom:8px; box-shadow:0 1px 2px var(--shadow); cursor:grab; border-left:4px solid var(--primary); }
   .kcard.overdue { border-left-color:var(--danger); }
   .kcard .t { font-weight:600; margin-bottom:6px; overflow-wrap:anywhere; word-break:break-word; }
+  .wday-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; align-items:center; }
+  .wday { border:1px solid var(--border); border-radius:8px; padding:4px 8px; cursor:pointer; user-select:none; }
+  .wday input { margin-right:4px; }
   .work-fields { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
   .work-fields input { flex:1 1 200px; }
   .field { position:relative; flex:1 1 140px; min-width:140px; display:flex; }
@@ -281,11 +287,21 @@
         <option value="daily" data-i18n="rep_daily"></option>
         <option value="weekly" data-i18n="rep_weekly"></option>
         <option value="monthly" data-i18n="rep_monthly"></option>
+        <option value="wdays" data-i18n="rep_wdays"></option>
       </select>
       <input id="startDate" type="date" data-i18n-title="startDate">
       <input id="deadline" type="date" data-i18n-title="deadline">
     </div>
     <div style="margin-top:8px"><textarea id="notes" data-i18n-ph="notesPh"></textarea></div>
+    <div class="wday-row" id="wdaysRow" style="display:none">
+      <label class="wday"><input type="checkbox" value="0"><span class="wday-name"></span></label>
+      <label class="wday"><input type="checkbox" value="1"><span class="wday-name"></span></label>
+      <label class="wday"><input type="checkbox" value="2"><span class="wday-name"></span></label>
+      <label class="wday"><input type="checkbox" value="3"><span class="wday-name"></span></label>
+      <label class="wday"><input type="checkbox" value="4"><span class="wday-name"></span></label>
+      <label class="wday"><input type="checkbox" value="5"><span class="wday-name"></span></label>
+      <label class="wday"><input type="checkbox" value="6"><span class="wday-name"></span></label>
+    </div>
     <div class="work-fields" id="workFields" style="display:none">
       <input id="wLibName" placeholder="Lib name">
       <input id="wCellName" placeholder="Cell name">
@@ -341,7 +357,7 @@
       signOut:'Đăng xuất', loginNotConfigured:'Chưa cấu hình Google Client ID trong file.',
       sync_expired:'⚠️ Phiên đăng nhập đã hết hạn, đang làm mới...',
       addTask:'+ Thêm công việc', sheetBtn:'⚙️ Google Sheet', themeTitle:'Đổi giao diện',
-      searchPh:'🔍 Tìm theo tên hoặc ghi chú', allStatus:'Tất cả trạng thái', allProjects:'Tất cả dự án', allSubs:'Tất cả sub-project', subPh:'Sub-project (tùy chọn)', repeatLabel:'Lặp lại', dup:'Nhân bản', dupSuffix:' (bản sao)', rep_none:'Không lặp', rep_daily:'Hàng ngày', rep_weekly:'Hàng tuần', rep_monthly:'Hàng tháng',
+      searchPh:'🔍 Tìm theo tên hoặc ghi chú', allStatus:'Tất cả trạng thái', allProjects:'Tất cả dự án', allSubs:'Tất cả sub-project', subPh:'Sub-project (tùy chọn)', repeatLabel:'Lặp lại', dup:'Nhân bản', dupSuffix:' (bản sao)', rep_none:'Không lặp', rep_daily:'Hàng ngày', rep_weekly:'Hàng tuần', rep_monthly:'Hàng tháng', rep_wdays:'Hàng tuần theo thứ', dayErr:'Hãy chọn ít nhất một ngày trong tuần',
       st_todo:'Chưa làm', st_doing:'Đang làm', st_done:'Hoàn thành',
       pr_high:'Cao', pr_mid:'Trung', pr_low:'Thấp', noProject:'Chưa phân loại',
       projectProgress:'📁 Tiến độ theo dự án', noProjects:'Chưa có dự án nào',
@@ -374,7 +390,7 @@
       signOut:'Sign out', loginNotConfigured:'Google Client ID is not configured in the file.',
       sync_expired:'⚠️ Session expired, refreshing...',
       addTask:'+ Add task', sheetBtn:'⚙️ Google Sheet', themeTitle:'Change theme',
-      searchPh:'🔍 Search by name or notes', allStatus:'All statuses', allProjects:'All projects', allSubs:'All sub-projects', subPh:'Sub-project (optional)', repeatLabel:'Repeat', dup:'Duplicate', dupSuffix:' (copy)', rep_none:'No repeat', rep_daily:'Daily', rep_weekly:'Weekly', rep_monthly:'Monthly',
+      searchPh:'🔍 Search by name or notes', allStatus:'All statuses', allProjects:'All projects', allSubs:'All sub-projects', subPh:'Sub-project (optional)', repeatLabel:'Repeat', dup:'Duplicate', dupSuffix:' (copy)', rep_none:'No repeat', rep_daily:'Daily', rep_weekly:'Weekly', rep_monthly:'Monthly', rep_wdays:'Weekly on days', dayErr:'Please select at least one weekday',
       st_todo:'To do', st_doing:'In progress', st_done:'Done',
       pr_high:'High', pr_mid:'Medium', pr_low:'Low', noProject:'Uncategorized',
       projectProgress:'📁 Project progress', noProjects:'No projects yet',
@@ -711,6 +727,7 @@
     // Header: nhóm theo tháng và ngày
     const monthSegs = [];
     const dayCells = [];
+    const wdayCells = [];
     for (let i = 0; i < N; i++) {
       const d = dayToDate(min + i);
       const key = (d.getUTCMonth() + 1) + '/' + d.getUTCFullYear();
@@ -718,6 +735,7 @@
       monthSegs[monthSegs.length - 1].n++;
       const dow = d.getUTCDay();
       dayCells.push(`<div class="${dow === 0 || dow === 6 ? 'we' : ''}" style="width:${DAY_PX}px">${d.getUTCDate()}</div>`);
+      wdayCells.push(`<div class="${dow === 0 || dow === 6 ? 'we' : ''}" style="width:${DAY_PX}px">${DAY_NAMES[lang][dow]}</div>`);
     }
     const monthsHtml = monthSegs.map(m => `<div style="width:${m.n * DAY_PX}px">${L('month')(m.key)}</div>`).join('');
 
@@ -776,6 +794,7 @@
             <div class="g-track" style="width:${W}px">
               <div class="g-months">${monthsHtml}</div>
               <div class="g-days">${dayCells.join('')}</div>
+              <div class="g-wdays">${wdayCells.join('')}</div>
             </div>
           </div>
           <div class="g-body">
@@ -890,16 +909,64 @@
     if (cur.status !== 'Hoàn thành' || prevStatus === 'Hoàn thành' || !cur.repeat || spawned.has(cur.id)) return;
     spawned.add(cur.id);
     localStorage.setItem('spawnedIds', JSON.stringify([...spawned]));
+    const base = cur.deadline || cur.startDate;
+    let nextStart, nextDead;
+    if ((cur.repeat || '').startsWith('wdays:')) {
+      const days = cur.repeat.slice(6).split(',').filter(Boolean).map(Number);
+      const k = nextWeekdayOffset(base, days);
+      nextStart = shiftByDays(cur.startDate, k);
+      nextDead = shiftByDays(cur.deadline, k);
+    } else {
+      nextStart = shiftDate(cur.startDate, cur.repeat);
+      nextDead = shiftDate(cur.deadline, cur.repeat);
+    }
     tasks.push({
       ...cur,
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       status: 'Chưa làm',
-      startDate: shiftDate(cur.startDate, cur.repeat),
-      deadline: shiftDate(cur.deadline, cur.repeat),
+      startDate: nextStart,
+      deadline: nextDead,
       updatedAt: new Date().toISOString()
     });
   }
-  const repLabel = r => (r ? '🔁 ' + L('rep_' + r) : '');
+  const DAY_NAMES = { vi: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'], en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] };
+  // Lặp theo thứ được lưu dạng "wdays:1,3,5" (0 = Chủ nhật ... 6 = Thứ 7)
+  const repLabel = r => {
+    if (!r) return '';
+    if (r.startsWith('wdays:')) {
+      const names = DAY_NAMES[lang];
+      return '🔁 ' + L('rep_wdays') + ': ' + r.slice(6).split(',').filter(Boolean).map(d => names[Number(d)]).join(', ');
+    }
+    return '🔁 ' + L('rep_' + r);
+  };
+  function selectedDays() {
+    return [...document.querySelectorAll('#wdaysRow input:checked')].map(i => Number(i.value)).sort((a, b) => a - b);
+  }
+  function setSelectedDays(arr) {
+    document.querySelectorAll('#wdaysRow input').forEach(i => { i.checked = arr.includes(Number(i.value)); });
+  }
+  function toggleRepeatUI() {
+    $('wdaysRow').style.display = $('repeat').value === 'wdays' ? '' : 'none';
+  }
+  function repeatValue() {
+    return $('repeat').value === 'wdays' ? 'wdays:' + selectedDays().join(',') : $('repeat').value;
+  }
+  function shiftByDays(str, k) {
+    if (!str) return '';
+    const [y, m, d] = str.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    dt.setUTCDate(dt.getUTCDate() + k);
+    return dt.toISOString().slice(0, 10);
+  }
+  // Số ngày từ base đến ngày lặp kế tiếp theo danh sách thứ
+  function nextWeekdayOffset(base, days) {
+    if (!base) return 7;
+    for (let k = 1; k <= 7; k++) {
+      const w = new Date(shiftByDays(base, k) + 'T00:00:00Z').getUTCDay();
+      if (days.includes(w)) return k;
+    }
+    return 7;
+  }
   const workInfo = t => {
     const parts = [
       t.libName && 'Lib: ' + t.libName,
@@ -911,7 +978,7 @@
 
   function resetForm() {
     editingId = null;
-    $('title').value = ''; $('notes').value = ''; $('deadline').value = ''; $('startDate').value = ''; $('project').value = ''; $('subProject').value = ''; $('repeat').value = ''; ['wLibName','wCellName','wDesignerName'].forEach(id => { $(id).value = ''; });
+    $('title').value = ''; $('notes').value = ''; $('deadline').value = ''; $('startDate').value = ''; $('project').value = ''; $('subProject').value = ''; $('repeat').value = ''; setSelectedDays([]); toggleRepeatUI(); ['wLibName','wCellName','wDesignerName'].forEach(id => { $(id).value = ''; });
     $('status').value = 'Chưa làm'; $('priority').value = 'Trung';
     $('submit').textContent = L('add');
     $('formTitle').textContent = L('formNew');
@@ -938,6 +1005,7 @@
     $('subProject').focus();
   };
   $('subProject').addEventListener('input', toggleClear);
+  $('repeat').addEventListener('change', toggleRepeatUI);
 
   function openModal() {
     toggleClear();
@@ -965,6 +1033,7 @@
   $('submit').onclick = () => {
     const title = $('title').value.trim();
     if (!title) { alert(L('needTitle')); return; }
+    if ($('repeat').value === 'wdays' && !selectedDays().length) { alert(L('dayErr')); return; }
     if ($('startDate').value && $('deadline').value && $('startDate').value > $('deadline').value) {
       alert(L('startAfter')); return;
     }
@@ -972,7 +1041,7 @@
       title,
       project: $('project').value.trim(),
       subProject: $('subProject').value.trim(),
-      repeat: $('repeat').value,
+      repeat: repeatValue(),
       libName: isWorkProject($('project').value) ? $('wLibName').value.trim() : '',
       cellName: isWorkProject($('project').value) ? $('wCellName').value.trim() : '',
       designerName: isWorkProject($('project').value) ? $('wDesignerName').value.trim() : '',
@@ -1002,7 +1071,15 @@
     const t = tasks.find(x => x.id === id);
     if (!t) return;
     editingId = id;
-    $('title').value = t.title; $('project').value = t.project || ''; $('subProject').value = t.subProject || ''; $('repeat').value = t.repeat || '';
+    $('title').value = t.title; $('project').value = t.project || ''; $('subProject').value = t.subProject || ''; const rp = t.repeat || '';
+    if (rp.startsWith('wdays:')) {
+      $('repeat').value = 'wdays';
+      setSelectedDays(rp.slice(6).split(',').filter(Boolean).map(Number));
+    } else {
+      $('repeat').value = rp;
+      setSelectedDays([]);
+    }
+    toggleRepeatUI();
     $('wLibName').value = t.libName || '';
     $('wCellName').value = t.cellName || ''; $('wDesignerName').value = t.designerName || '';
     $('notes').value = t.notes || ''; $('deadline').value = t.deadline || '';
@@ -1177,6 +1254,7 @@
     $('themeSelect').value = cur;
     $('langSelect').innerHTML = '<option value="vi">🇻🇳 Tiếng Việt</option><option value="en">🇬🇧 English</option>';
     $('langSelect').value = lang;
+    document.querySelectorAll('.wday-name').forEach((el, i) => { el.textContent = DAY_NAMES[lang][i]; });
     $('submit').textContent = editingId ? L('update') : L('add');
     $('formTitle').textContent = editingId ? L('formEdit') : L('formNew');
     renderSync();
