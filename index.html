@@ -419,14 +419,23 @@
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   };
 
+  // Đưa ngày về dạng yyyy-mm-dd; trả về '' nếu không đọc được
+  function cleanDate(v) {
+    const str = String(v ?? '').trim();
+    let m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+    m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+    return '';
+  }
   function normalize(t) {
     return {
       ...t,
       project: (t.project || '').trim(),
       subProject: (t.subProject || '').trim(),
       repeat: t.repeat || '',
-      startDate: t.startDate ? String(t.startDate).slice(0,10) : '',
-      deadline: t.deadline ? String(t.deadline).slice(0,10) : ''
+      startDate: cleanDate(t.startDate),
+      deadline: cleanDate(t.deadline)
     };
   }
 
@@ -675,7 +684,7 @@
       const s = dayNum(t.startDate || t.deadline);
       const e = Math.max(s, dayNum(t.deadline || t.startDate));
       return { ...t, s, e };
-    });
+    }).filter(i => Number.isFinite(i.s) && Number.isFinite(i.e));
 
     // Khoảng thời gian hiển thị: bao trọn mọi việc và hôm nay, đệm 2 ngày mỗi bên
     const todayN = dayNum(today());
