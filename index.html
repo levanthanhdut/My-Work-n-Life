@@ -636,8 +636,8 @@
   const dayToDate = n => new Date(n * 86400000);
 
   function renderGantt(list) {
-    // Việc lặp lại không hiển thị trong Gantt (vẫn có trong Kanban và danh sách)
-    const plain = list.filter(t => !t.repeat);
+    // Việc lặp lại đã hoàn thành được ẩn khỏi Gantt (Kanban và danh sách vẫn hiển thị đầy đủ)
+    const plain = list.filter(t => !(t.repeat && t.status === 'Hoàn thành'));
     const dated = plain.filter(t => t.startDate || t.deadline);
     const undated = plain.length - dated.length;
     $('noDateNote').textContent = undated ? L('noDate')(undated) : '';
