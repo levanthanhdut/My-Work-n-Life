@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="My Work n Life">
 <meta name="theme-color" content="#4f46e5">
@@ -183,7 +184,7 @@
     .projects { grid-template-columns:1fr; }
   }
 </style>
-<script src="https://accounts.google.com/gsi/client" async defer onload="initAuth()"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 <header>
@@ -1104,6 +1105,7 @@
     $('authMsg').textContent = GOOGLE_CLIENT_ID.startsWith('YOUR_') ? L('loginNotConfigured') : '';
   }
   $('signOut').onclick = signOut;
+  window.addEventListener('load', initAuth);
 
   // ===== ÁP DỤNG NGÔN NGỮ =====
   function applyI18n() {
