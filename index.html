@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="My Work n Life">
+<meta name="theme-color" content="#4f46e5">
+<title>My Work n Life</title>
+<style>
+  :root {
+    --bg:#f5f5f4; --card:#ffffff; --text:#1c1917; --muted:#78716c;
+    --primary:#1c1917; --primary-soft:#e7e5e4; --border:#e7e5e4; --danger:#b91c1c;
+    --header:#ffffff; --header-text:#1c1917; --surface:#fafaf9; --col:#efeeec; --soft:#f5f5f4;
+    --track:#e7e5e4; --input:#ffffff; --shadow:rgba(0,0,0,.06);
+    --btn2:#e7e5e4; --btn2-text:#1c1917; --warn:#f59e0b; --done:#15803d; --todo:#94a3b8;
+  }
+  /* Các style có thể chọn */
+  [data-theme="indigo"] {
+    --bg:#f4f6fb; --card:#ffffff; --text:#1f2937; --muted:#6b7280;
+    --primary:#4f46e5; --primary-soft:#eef2ff; --border:#e5e7eb; --danger:#dc2626;
+    --header:#4f46e5; --header-text:#ffffff; --surface:#f9fafb; --col:#eef0f6; --soft:#f3f4ff;
+    --track:#e5e7eb; --btn2:#e5e7eb; --btn2-text:#1f2937; --done:#16a34a;
+  }
+  /* Các style có thể chọn */
+  [data-theme="dark"] {
+    --bg:#0f172a; --card:#1e293b; --text:#e2e8f0; --muted:#94a3b8;
+    --primary:#818cf8; --primary-soft:rgba(129,140,248,.18); --border:#334155; --danger:#f87171;
+    --header:#111827; --header-text:#e5e7eb; --surface:#162032; --col:#172136; --soft:#232b45;
+    --track:#334155; --input:#0f172a; --shadow:rgba(0,0,0,.4);
+    --btn2:#334155; --btn2-text:#e2e8f0; --done:#22c55e; --todo:#64748b;
+  }
+  [data-theme="ocean"] {
+    --bg:#ecfeff; --card:#ffffff; --text:#164e63; --muted:#5b7c86;
+    --primary:#0891b2; --primary-soft:#cffafe; --border:#cffafe; --header:#0e7490;
+    --surface:#f0fdfa; --col:#e0f7fa; --soft:#ecfeff; --track:#cffafe;
+    --btn2:#cffafe; --btn2-text:#164e63; --done:#059669;
+  }
+  [data-theme="warm"] {
+    --bg:#fff7ed; --card:#ffffff; --text:#431407; --muted:#8a5a44;
+    --primary:#ea580c; --primary-soft:#ffedd5; --border:#fed7aa; --header:#9a3412;
+    --surface:#fffaf5; --col:#ffedd5; --soft:#fff1e6; --track:#fed7aa;
+    --btn2:#ffedd5; --btn2-text:#431407; --done:#65a30d; --danger:#b91c1c;
+  }
+
+  * { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+  header { background:var(--header); color:var(--header-text); padding:14px 24px; padding-top:calc(14px + env(safe-area-inset-top)); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-bottom:1px solid var(--border); }
+  header h1 { margin:0; font-size:1.25rem; }
+  #sync { font-size:.82rem; opacity:.85; }
+  .hdr-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  main { max-width:1200px; margin:0 auto; padding:20px; padding-bottom:calc(20px + env(safe-area-inset-bottom)); display:grid; gap:16px; }
+  .card { background:var(--card); border-radius:14px; padding:16px; box-shadow:0 1px 3px var(--shadow); }
+  .card h2 { margin:0 0 12px; font-size:1rem; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  input, select, textarea, button { font:inherit; padding:8px 10px; border:1px solid var(--border); border-radius:10px; background:var(--input); color:var(--text); }
+  input, select, textarea { flex:1; min-width:140px; }
+  textarea { width:100%; min-height:60px; resize:vertical; }
+  button { cursor:pointer; background:var(--primary); color:#fff; border:none; transition:opacity .15s, transform .05s; }
+  button:hover { opacity:.9; }
+  button:active { transform:scale(.97); }
+  button.secondary { background:var(--btn2); color:var(--btn2-text); }
+  button.danger { background:var(--danger); }
+  .hbtn { background:var(--card); color:var(--primary); border:1px solid var(--border); font-weight:600; }
+  .hbtn-select { flex:0 0 auto; max-width:170px; }
+
+  .stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:12px; }
+  .stat { background:var(--card); border-radius:14px; padding:14px; box-shadow:0 1px 3px var(--shadow); }
+  .stat b { display:block; font-size:1.6rem; }
+  .stat span { color:var(--muted); font-size:.85rem; }
+  .projects { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:12px; }
+  .proj { border:1px solid var(--border); border-radius:12px; padding:12px; cursor:pointer; background:var(--card); }
+  .proj:hover { border-color:var(--primary); }
+  .proj strong { display:block; margin-bottom:6px; }
+  .bar { height:8px; background:var(--track); border-radius:999px; overflow:hidden; }
+  .bar > div { height:100%; background:var(--done); }
+  .proj small { color:var(--muted); }
+  .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:.75rem; background:var(--primary-soft); color:var(--primary); }
+  .p-Cao { background:rgba(220,38,38,.15); color:#dc2626; }
+  .p-Trung { background:rgba(245,158,11,.18); color:#d97706; }
+  .p-Thấp { background:rgba(22,163,74,.15); color:#16a34a; }
+  .empty { text-align:center; color:var(--muted); padding:24px; }
+
+  .overlay { position:fixed; inset:0; background:rgba(15,23,42,.5); display:flex; align-items:center; justify-content:center; padding:16px; z-index:100; }
+  .modal { width:100%; max-width:720px; max-height:90vh; overflow:auto; box-shadow:0 10px 30px rgba(0,0,0,.25); }
+
+  /* Gantt */
+  .g-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:12px; background:var(--card); -webkit-overflow-scrolling:touch; }
+  .g-inner { position:relative; width:max-content; }
+  .g-head, .g-row { display:flex; }
+  .g-head { background:var(--surface); border-bottom:1px solid var(--border); }
+  .g-row { height:38px; border-bottom:1px solid var(--border); }
+  .g-label { flex:0 0 220px; width:220px; position:sticky; left:0; z-index:2; background:var(--card); padding:6px 10px; font-size:.85rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; border-right:1px solid var(--border); display:flex; align-items:center; }
+  .g-head .g-label { background:var(--surface); font-weight:600; color:var(--muted); }
+  .g-proj, .g-proj .g-label { background:var(--soft); }
+  .g-proj .g-label { font-weight:700; color:var(--primary); }
+  .g-track { position:relative; height:100%; flex:0 0 auto; }
+  .g-months, .g-days { display:flex; height:22px; align-items:center; font-size:.72rem; color:var(--muted); }
+  .g-months > div { height:100%; display:flex; align-items:center; padding-left:6px; font-weight:600; border-right:1px solid var(--border); overflow:hidden; white-space:nowrap; flex:0 0 auto; }
+  .g-days > div { flex:0 0 auto; text-align:center; border-right:1px solid var(--border); }
+  .g-days .we { background:var(--track); }
+  .g-bar { position:absolute; top:7px; height:24px; border-radius:7px; color:#fff; font-size:.75rem; line-height:24px; padding:0 6px; overflow:hidden; white-space:nowrap; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,.15); }
+  .g-bar:hover { opacity:.85; }
+  .b-todo { background:var(--todo); }
+  .b-doing { background:var(--primary); }
+  .b-done { background:var(--done); }
+  .b-over { background:var(--danger); }
+  .g-today { position:absolute; top:0; bottom:0; width:2px; background:var(--warn); z-index:1; pointer-events:none; }
+  .g-body { position:relative; }
+  .g-legend { display:flex; gap:12px; flex-wrap:wrap; font-size:.8rem; color:var(--muted); margin-bottom:10px; align-items:center; }
+  .g-legend i { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:4px; vertical-align:-2px; }
+
+  /* Sub-project */
+  .g-sub, .g-sub .g-label { background:var(--surface); }
+  .g-sub .g-label { padding-left:24px; font-weight:600; color:var(--muted); }
+  .sub-row { display:flex; justify-content:space-between; font-size:.82rem; color:var(--muted); margin-top:4px; padding-left:8px; }
+
+  /* Kanban */
+  .board { display:grid; grid-template-columns:repeat(3, minmax(220px,1fr)); gap:12px; align-items:start; }
+  .col { background:var(--col); border-radius:14px; padding:10px; min-height:200px; }
+  .col.drop { background:var(--primary-soft); outline:2px dashed var(--primary); }
+  .col h3 { margin:4px 4px 10px; font-size:.95rem; display:flex; justify-content:space-between; }
+  .col h3 span { background:var(--card); border-radius:999px; padding:0 8px; font-size:.8rem; color:var(--muted); }
+  .kcard { background:var(--card); border-radius:12px; padding:10px; margin-bottom:8px; box-shadow:0 1px 2px var(--shadow); cursor:grab; border-left:4px solid var(--primary); }
+  .kcard.overdue { border-left-color:var(--danger); }
+  .kcard .t { font-weight:600; margin-bottom:6px; overflow-wrap:anywhere; }
+  .kcard .meta { display:flex; gap:6px; flex-wrap:wrap; align-items:center; font-size:.78rem; color:var(--muted); }
+  .kcard .n { font-size:.82rem; color:var(--muted); margin-top:6px; white-space:pre-wrap; }
+  .kcard .actions { margin-top:8px; display:flex; gap:6px; }
+  .kcard .actions button { padding:4px 8px; font-size:.8rem; }
+
+  /* Danh sách */
+  .task-list { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .task-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  .task-item:last-child { border-bottom:none; }
+  .task-item .ti-title { flex:1 1 220px; font-weight:600; min-width:0; overflow-wrap:anywhere; }
+  .task-item .ti-notes { flex:1 1 100%; color:var(--muted); font-size:.85rem; white-space:pre-wrap; }
+  .task-item .ti-meta { display:flex; gap:6px; flex-wrap:wrap; align-items:center; font-size:.82rem; color:var(--muted); }
+  .task-item .ti-actions { display:flex; gap:6px; }
+  .task-item .ti-actions button { padding:4px 8px; font-size:.8rem; }
+  .task-item.overdue .ti-deadline { color:var(--danger); font-weight:600; }
+  .s-todo { background:var(--track); color:var(--muted); }
+  .s-doing { background:var(--primary-soft); color:var(--primary); }
+  .s-done { background:rgba(22,163,74,.15); color:var(--done); }
+
+  /* Responsive: máy tính bảng và điện thoại */
+  @media (max-width:800px) { .board { grid-template-columns:1fr; } }
+  @media (max-width:640px) {
+    header { padding:12px 16px; padding-top:calc(12px + env(safe-area-inset-top)); }
+    header h1 { font-size:1.1rem; }
+    .hdr-actions { width:100%; }
+    .hdr-actions button, .hdr-actions select { flex:1 1 auto; }
+    main { padding:12px; gap:12px; }
+    .card { padding:14px; border-radius:12px; }
+    /* 16px để iPhone không tự phóng to khi nhập liệu */
+    input, select, textarea { font-size:16px; flex:1 1 100%; min-width:0; }
+    button { min-height:40px; padding:8px 12px; }
+    .kcard .actions button, .task-item .ti-actions button { min-height:34px; }
+    .task-item .ti-title { flex-basis:100%; }
+    .task-item .ti-actions { width:100%; }
+    .overlay { align-items:flex-end; padding:0; }
+    .modal { max-width:none; max-height:92vh; border-radius:16px 16px 0 0; padding-bottom:calc(16px + env(safe-area-inset-bottom)); }
+    .stats { grid-template-columns:repeat(2, 1fr); }
+    .stat b { font-size:1.3rem; }
+    .projects { grid-template-columns:1fr; }
+  }
+</style>
+<script src="https://accounts.google.com/gsi/client" async defer onload="initAuth()"></script>
+</head>
+<body>
+<header>
+  <h1 data-i18n="appName">My Work n Life</h1>
+  <div class="hdr-actions">
+    <div id="sync"></div>
+    <select id="langSelect" class="hbtn-select"></select>
+    <select id="themeSelect" class="hbtn-select" data-i18n-title="themeTitle"></select>
+    <span id="userBox" style="font-size:.85rem;opacity:.9"></span>
+    <button id="signOut" class="hbtn" data-i18n="signOut" style="display:none"></button>
+    <button id="openAdd" class="hbtn" data-i18n="addTask"></button>
+    <button id="openSettings" class="hbtn" data-i18n="sheetBtn"></button>
+  </div>
+</header>
+
+<section id="authView" class="card" style="max-width:460px;margin:48px auto;text-align:center;display:none">
+  <h2 data-i18n="loginTitle"></h2>
+  <p data-i18n="loginDesc" style="color:var(--muted)"></p>
+  <div id="gBtn" style="display:flex;justify-content:center;margin:16px 0"></div>
+  <p id="authMsg" style="color:var(--muted);font-size:.85rem"></p>
+</section>
+<main id="mainView" style="display:none">
+  <section class="card">
+    <div class="row" style="margin-bottom:12px">
+      <input id="search" data-i18n-ph="searchPh">
+      <select id="filterProject" style="max-width:220px"></select>
+      <select id="filterSub" style="max-width:220px"></select>
+      <select id="filterStatus" style="max-width:180px">
+        <option value="" data-i18n="allStatus"></option>
+        <option value="Chưa làm" data-i18n="st_todo"></option>
+        <option value="Đang làm" data-i18n="st_doing"></option>
+        <option value="Hoàn thành" data-i18n="st_done"></option>
+      </select>
+    </div>
+
+    <div id="ganttView">
+      <div style="margin-bottom:18px">
+        <h3 style="margin:0 0 10px;font-size:.95rem" data-i18n="projectProgress"></h3>
+        <div class="projects" id="projectStats"></div>
+      </div>
+      <div class="g-legend">
+        <span><i style="background:#94a3b8"></i><span data-i18n="st_todo"></span></span>
+        <span><i style="background:var(--primary)"></i><span data-i18n="st_doing"></span></span>
+        <span><i style="background:#16a34a"></i><span data-i18n="st_done"></span></span>
+        <span><i style="background:var(--danger)"></i><span data-i18n="legendOver"></span></span>
+        <span><i style="background:#f59e0b"></i><span data-i18n="legendToday"></span></span>
+        <span id="noDateNote"></span>
+      </div>
+      <div id="gantt"></div>
+    </div>
+    <div id="kanbanView">
+      <h3 style="margin:20px 0 10px;font-size:.95rem" data-i18n="kanbanTitle"></h3>
+      <div class="board">
+        <div class="col" data-status="Chưa làm"><h3><b data-i18n="st_todo"></b> <span id="c0">0</span></h3><div class="items"></div></div>
+        <div class="col" data-status="Đang làm"><h3><b data-i18n="st_doing"></b> <span id="c1">0</span></h3><div class="items"></div></div>
+        <div class="col" data-status="Hoàn thành"><h3><b data-i18n="st_done"></b> <span id="c2">0</span></h3><div class="items"></div></div>
+      </div>
+    </div>
+    <div id="listView" style="margin-top:20px">
+      <div class="stats" id="stats" style="margin-bottom:14px"></div>
+      <h3 style="margin:0 0 10px;font-size:.95rem" data-i18n="listTitle"></h3>
+      <div id="taskList" class="task-list"></div>
+    </div>
+  </section>
+
+
+
+  <div class="overlay" id="modal" style="display:none">
+  <section class="card modal">
+    <h2 id="formTitle">➕ Thêm công việc mới</h2>
+    <div class="row">
+      <input id="title" data-i18n-ph="titlePh" style="flex:2">
+      <input id="project" list="projectList" data-i18n-ph="projectPh">
+      <datalist id="projectList"></datalist>
+      <input id="subProject" list="subProjectList" data-i18n-ph="subPh">
+      <datalist id="subProjectList"></datalist>
+      <select id="status">
+        <option value="Chưa làm" data-i18n="st_todo"></option>
+        <option value="Đang làm" data-i18n="st_doing"></option>
+        <option value="Hoàn thành" data-i18n="st_done"></option>
+      </select>
+      <select id="priority">
+        <option value="Cao" data-i18n="pr_high"></option>
+        <option value="Trung" selected data-i18n="pr_mid"></option>
+        <option value="Thấp" data-i18n="pr_low"></option>
+      </select>
+      <input id="startDate" type="date" data-i18n-title="startDate">
+      <input id="deadline" type="date" data-i18n-title="deadline">
+    </div>
+    <div style="margin-top:8px"><textarea id="notes" data-i18n-ph="notesPh"></textarea></div>
+    <div class="row" style="margin-top:8px">
+      <button id="submit"></button>
+      <button id="cancel" class="secondary" data-i18n="close"></button>
+    </div>
+  </section>
+  </div>
+
+</main>
+
+<div class="overlay" id="settingsModal" style="display:none">
+  <section class="card modal" style="max-width:560px">
+    <h2 data-i18n="sheetTitle"></h2>
+    <p style="color:var(--muted);font-size:.9rem;margin:0 0 12px" data-i18n="sheetDesc"></p>
+    <div class="row">
+      <input id="url" data-i18n-ph="urlPh">
+      <input id="secret" type="password" data-i18n-ph="secretPh">
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="saveUrl" data-i18n="saveSync"></button>
+      <button id="pull" class="secondary" data-i18n="pullSheet"></button>
+      <button id="closeSettings" class="secondary" data-i18n="close"></button>
+    </div>
+  </section>
+</div>
+<script>
+
+  // ===== CẤU HÌNH GOOGLE =====
+  // Thay bằng OAuth Client ID của bạn (xem hướng dẫn)
+  const GOOGLE_CLIENT_ID = '984571350968-84ffk1pdr3m1vu8jq1arc56ckgcl2mso.apps.googleusercontent.com';
+  // false: dùng chế độ cục bộ, không cần đăng nhập và không đồng bộ Sheet. true: bật đăng nhập Google
+  const AUTH_ENABLED = false;
+
+  // ===== ĐA NGÔN NGỮ =====
+  // Giá trị lưu trong Sheet (Chưa làm, Cao, ...) luôn giữ nguyên tiếng Việt; chỉ phần hiển thị đổi theo ngôn ngữ.
+  const I18N = {
+    vi: {
+      appName:'Công việc và cuộc sống của tôi',
+      loginTitle:'Đăng nhập để xem công việc của bạn', loginDesc:'Mỗi tài khoản Google có dữ liệu riêng.',
+      signOut:'Đăng xuất', loginNotConfigured:'Chưa cấu hình Google Client ID trong file.',
+      sync_expired:'⚠️ Phiên đăng nhập đã hết hạn, đang làm mới...',
+      addTask:'+ Thêm công việc', sheetBtn:'⚙️ Google Sheet', themeTitle:'Đổi giao diện',
+      searchPh:'🔍 Tìm theo tên hoặc ghi chú', allStatus:'Tất cả trạng thái', allProjects:'Tất cả dự án', allSubs:'Tất cả sub-project', subPh:'Sub-project (tùy chọn)',
+      st_todo:'Chưa làm', st_doing:'Đang làm', st_done:'Hoàn thành',
+      pr_high:'Cao', pr_mid:'Trung', pr_low:'Thấp', noProject:'Chưa phân loại',
+      projectProgress:'📁 Tiến độ theo dự án', noProjects:'Chưa có dự án nào',
+      projDone:(d,n,p)=>`${d}/${n} hoàn thành (${p}%)`,
+      legendOver:'Quá hạn', legendToday:'Hôm nay',
+      kanbanTitle:'🗂️ Kanban', dropHere:'Kéo thẻ vào đây',
+      listTitle:'📝 Danh sách công việc', noTasks:'Chưa có công việc nào', noDeadline:'Không có hạn',
+      noDate:n=>`(${n} việc chưa có ngày, không hiển thị)`,
+      noDateAll:'Chưa có công việc nào có ngày bắt đầu hoặc hạn chót',
+      edit:'Sửa', del:'Xóa', confirmDel:'Xóa công việc này?',
+      formNew:'➕ Thêm công việc mới', formEdit:'✏️ Chỉnh sửa công việc', add:'Thêm', update:'Cập nhật', close:'Đóng',
+      titlePh:'Tên công việc *', projectPh:'Dự án (chọn hoặc nhập mới)', notesPh:'Ghi chú',
+      startDate:'Ngày bắt đầu', deadline:'Hạn chót',
+      needTitle:'Vui lòng nhập tên công việc', startAfter:'Ngày bắt đầu không được sau hạn chót',
+      sheetTitle:'⚙️ Kết nối Google Sheet',
+      sheetDesc:'Dữ liệu tự động đồng bộ với Sheet mỗi khi bạn thay đổi công việc và khi mở trang. Chỉ cần nhập lại URL nếu bạn muốn đổi sang Sheet khác.',
+      urlPh:'Dán URL Web App của Google Apps Script', saveSync:'Lưu & đồng bộ', pullSheet:'Tải dữ liệu từ Sheet',
+      needUrl:'Hãy nhập và lưu URL Apps Script trước.',
+      sync_local:'Chỉ lưu cục bộ', sync_localNoUrl:'Chỉ lưu cục bộ (chưa có URL Sheet)', noSecret:'Chưa nhập mã bí mật', secretPh:'Mã bí mật (tự đặt, khớp với Apps Script)',
+      sync_busy:'⏳ Đang đồng bộ...', synced:t=>`✔ Đã đồng bộ lúc ${t}`, syncErr:m=>`✖ Lỗi đồng bộ: ${m}`,
+      loading:'⏳ Đang tải từ Sheet...', loaded:n=>`✔ Đã tải ${n} công việc từ Sheet`,
+      loadErr:m=>`✖ Lỗi tải dữ liệu: ${m}`, urlChecking:'Đã lưu URL. Đang kiểm tra...',
+      stTotal:'Tổng công việc', stOver:'Quá hạn', month:m=>`Tháng ${m}`, gridHead:'Công việc / Dự án',
+      locale:'vi-VN',
+      th_minimal:'Tối giản', th_dark:'Tối', th_indigo:'Indigo', th_ocean:'Đại dương', th_warm:'Ấm áp'
+    },
+    en: {
+      appName:'My Work n Life',
+      loginTitle:'Sign in to see your tasks', loginDesc:'Each Google account has its own data.',
+      signOut:'Sign out', loginNotConfigured:'Google Client ID is not configured in the file.',
+      sync_expired:'⚠️ Session expired, refreshing...',
+      addTask:'+ Add task', sheetBtn:'⚙️ Google Sheet', themeTitle:'Change theme',
+      searchPh:'🔍 Search by name or notes', allStatus:'All statuses', allProjects:'All projects', allSubs:'All sub-projects', subPh:'Sub-project (optional)',
+      st_todo:'To do', st_doing:'In progress', st_done:'Done',
+      pr_high:'High', pr_mid:'Medium', pr_low:'Low', noProject:'Uncategorized',
+      projectProgress:'📁 Project progress', noProjects:'No projects yet',
+      projDone:(d,n,p)=>`${d}/${n} done (${p}%)`,
+      legendOver:'Overdue', legendToday:'Today',
+      kanbanTitle:'🗂️ Kanban', dropHere:'Drag cards here',
+      listTitle:'📝 Task list', noTasks:'No tasks yet', noDeadline:'No due date',
+      noDate:n=>`(${n} task(s) without dates, hidden)`,
+      noDateAll:'No tasks with a start or due date yet',
+      edit:'Edit', del:'Delete', confirmDel:'Delete this task?',
+      formNew:'➕ New task', formEdit:'✏️ Edit task', add:'Add', update:'Update', close:'Close',
+      titlePh:'Task name *', projectPh:'Project (pick or type a new one)', notesPh:'Notes',
+      startDate:'Start date', deadline:'Due date',
+      needTitle:'Please enter a task name', startAfter:'Start date cannot be after the due date',
+      sheetTitle:'⚙️ Connect Google Sheet',
+      sheetDesc:'Data syncs automatically with the Sheet whenever you change a task and when the page opens. Enter a new URL only if you want to switch to another Sheet.',
+      urlPh:'Paste the Google Apps Script Web App URL', saveSync:'Save & sync', pullSheet:'Load data from Sheet',
+      needUrl:'Please enter and save the Apps Script URL first.',
+      sync_local:'Saved locally only', sync_localNoUrl:'Saved locally only (no Sheet URL yet)', noSecret:'No secret entered', secretPh:'Secret code (choose one, same as in Apps Script)',
+      sync_busy:'⏳ Syncing...', synced:t=>`✔ Synced at ${t}`, syncErr:m=>`✖ Sync error: ${m}`,
+      loading:'⏳ Loading from Sheet...', loaded:n=>`✔ Loaded ${n} task(s) from Sheet`,
+      loadErr:m=>`✖ Load error: ${m}`, urlChecking:'URL saved. Checking...',
+      stTotal:'Total tasks', stOver:'Overdue', month:m=>`Month ${m}`, gridHead:'Task / Project',
+      locale:'en-US',
+      th_minimal:'Minimal', th_dark:'Dark', th_indigo:'Indigo', th_ocean:'Ocean', th_warm:'Warm'
+    }
+  };
+  let lang = localStorage.getItem('lang') || 'vi';
+  const L = k => I18N[lang][k];
+  let syncMsg = { k: 'sync_local', a: [] };
+  function setSync(k, ...a) { syncMsg = { k, a }; renderSync(); }
+  function renderSync() {
+    const v = L(syncMsg.k);
+    $('sync').textContent = typeof v === 'function' ? v(...syncMsg.a) : v;
+  }
+  const STATUS_KEY = { 'Chưa làm': 'st_todo', 'Đang làm': 'st_doing', 'Hoàn thành': 'st_done' };
+  const PRIORITY_KEY = { 'Cao': 'pr_high', 'Trung': 'pr_mid', 'Thấp': 'pr_low' };
+  const sLabel = s => L(STATUS_KEY[s]) || s;
+  const pLabel = p => L(PRIORITY_KEY[p]) || p;
+  const pName = p => (p === NO_PROJECT ? L('noProject') : p);
+  let tasks = [];
+  let user = null, idToken = null, tokenExp = 0, pendingPush = false;
+  let gsUrl = localStorage.getItem('gsUrl') || '';
+  let syncSecret = localStorage.getItem('syncSecret') || '';
+  let editingId = null;
+  const STATUSES = ['Chưa làm', 'Đang làm', 'Hoàn thành'];
+  const NO_PROJECT = 'Chưa phân loại';
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const today = () => new Date().toISOString().slice(0,10);
+
+  function normalize(t) {
+    return {
+      ...t,
+      project: (t.project || '').trim(),
+      subProject: (t.subProject || '').trim(),
+      startDate: t.startDate ? String(t.startDate).slice(0,10) : '',
+      deadline: t.deadline ? String(t.deadline).slice(0,10) : ''
+    };
+  }
+
+  function setSync(msg) { $('sync').textContent = msg; }
+
+  function saveLocal() {
+    if (user) localStorage.setItem(userKey(), JSON.stringify(tasks));
+    render();
+  }
+
+  async function pushToSheet() {
+    if (!user) return;
+    if (!gsUrl) { setSync('sync_localNoUrl'); return; }
+    if (!AUTH_ENABLED && !syncSecret) { setSync('noSecret'); return; }
+    if (AUTH_ENABLED && !tokenFresh()) { requestRefresh(true); return; }
+    setSync('sync_busy');
+    try {
+      const res = await fetch(gsUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(Object.assign(authPayload(), { tasks }))
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setSync('synced', new Date().toLocaleTimeString(L('locale')));
+    } catch (e) {
+      setSync('syncErr', e.message);
+    }
+  }
+
+  function persist() { saveLocal(); pushToSheet(); }
+
+  async function pullFromSheet() {
+    if (!user) return;
+    if (!gsUrl) { alert(L('needUrl')); return; }
+    if (!AUTH_ENABLED && !syncSecret) { setSync('noSecret'); return; }
+    if (AUTH_ENABLED && !tokenFresh()) { requestRefresh(false); return; }
+    setSync('loading');
+    try {
+      const res = await fetch(gsUrl + '?' + authQuery());
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const remote = (data.tasks || []).map(normalize);
+      // Sheet trống nhưng máy đang có dữ liệu (lần đầu đăng nhập): đẩy dữ liệu lên thay vì xóa
+      if (!remote.length && tasks.length) { await pushToSheet(); return; }
+      tasks = remote;
+      saveLocal();
+      setSync('loaded', tasks.length);
+    } catch (e) {
+      setSync('loadErr', e.message);
+    }
+  }
+
+  function projectOf(t) { return t.project || NO_PROJECT; }
+
+  // Cập nhật danh sách dự án (datalist + bộ lọc)
+  function subsOf(p) {
+    return [...new Set(tasks.filter(t => t.subProject && (!p || projectOf(t) === p)).map(t => t.subProject))]
+      .sort((a, b) => a.localeCompare(b, lang));
+  }
+
+  function refreshProjectOptions() {
+    const projects = [...new Set(tasks.map(t => t.project).filter(Boolean))].sort((a, b) => a.localeCompare(b, lang));
+    $('projectList').innerHTML = projects.map(p => `<option value="${esc(p)}">`).join('');
+    $('subProjectList').innerHTML = subsOf($('project').value.trim()).map(x => `<option value="${esc(x)}">`).join('');
+
+    const cur = $('filterProject').value;
+    $('filterProject').innerHTML = `<option value="">${L('allProjects')}</option>` +
+      projects.map(p => `<option ${p === cur ? 'selected' : ''}>${esc(p)}</option>`).join('') +
+      (tasks.some(t => !t.project) ? `<option value="${NO_PROJECT}" ${cur === NO_PROJECT ? 'selected' : ''}>${L('noProject')}</option>` : '');
+
+    const curSub = $('filterSub').value;
+    $('filterSub').innerHTML = `<option value="">${L('allSubs')}</option>` +
+      subsOf(cur).map(x => `<option ${x === curSub ? 'selected' : ''}>${esc(x)}</option>`).join('');
+  }
+
+  function filtered() {
+    const q = $('search').value.trim().toLowerCase();
+    const fs = $('filterStatus').value;
+    const fp = $('filterProject').value;
+    const fsub = $('filterSub').value;
+    let list = tasks.filter(t =>
+      (!fs || t.status === fs) &&
+      (!fp || projectOf(t) === fp) &&
+      (!fsub || t.subProject === fsub) &&
+      (!q || (t.title + ' ' + (t.notes || '') + ' ' + t.project + ' ' + (t.subProject || '')).toLowerCase().includes(q))
+    );
+    return list.sort((a, b) => (a.deadline || '9999').localeCompare(b.deadline || '9999'));
+  }
+
+  function isOverdue(t) { return t.deadline && t.deadline < today() && t.status !== 'Hoàn thành'; }
+
+  function renderStats() {
+    const count = s => tasks.filter(t => t.status === s).length;
+    const overdue = tasks.filter(isOverdue).length;
+    $('stats').innerHTML = `
+      <div class="stat"><b>${tasks.length}</b><span>${L('stTotal')}</span></div>
+      <div class="stat"><b>${count('Chưa làm')}</b><span>${L('st_todo')}</span></div>
+      <div class="stat"><b>${count('Đang làm')}</b><span>${L('st_doing')}</span></div>
+      <div class="stat"><b>${count('Hoàn thành')}</b><span>${L('st_done')}</span></div>
+      <div class="stat"><b style="color:var(--danger)">${overdue}</b><span>${L('stOver')}</span></div>`;
+
+    const groups = {};
+    tasks.forEach(t => { const p = projectOf(t); (groups[p] = groups[p] || []).push(t); });
+    const names = Object.keys(groups).sort((a, b) => a.localeCompare(b, lang));
+    $('projectStats').innerHTML = names.length ? names.map(p => {
+      const all = groups[p], done = all.filter(t => t.status === 'Hoàn thành').length;
+      const pct = Math.round(done / all.length * 100);
+      const subs = [...new Set(all.map(t => t.subProject).filter(Boolean))].sort((a, b) => a.localeCompare(b, lang));
+      const subHtml = subs.map(sb => {
+        const st = all.filter(t => t.subProject === sb);
+        const sd = st.filter(t => t.status === 'Hoàn thành').length;
+        return `<div class="sub-row"><span>↳ ${esc(sb)}</span><span>${sd}/${st.length}</span></div>`;
+      }).join('');
+      return `<div class="proj" onclick="selectProject('${esc(p).replace(/'/g,'&#39;')}')">
+        <strong>${esc(pName(p))}</strong>
+        <div class="bar"><div style="width:${pct}%"></div></div>
+        <small>${L('projDone')(done, all.length, pct)}</small>
+        ${subHtml}
+      </div>`;
+    }).join('') : `<div class="empty">${L('noProjects')}</div>`;
+  }
+
+  window.selectProject = p => {
+    $('filterProject').value = p;
+    $('filterSub').value = '';
+    render();
+  };
+
+  function renderList(list) {
+    if (!list.length) {
+      $('taskList').innerHTML = `<div class="empty">${L('noTasks')}</div>`;
+      return;
+    }
+    const sClass = { 'Chưa làm': 's-todo', 'Đang làm': 's-doing', 'Hoàn thành': 's-done' };
+    $('taskList').innerHTML = list.map(t => `
+      <div class="task-item ${isOverdue(t) ? 'overdue' : ''}">
+        <div class="ti-title">${esc(t.title)}</div>
+        <div class="ti-meta">
+          <span class="badge">${esc(pName(projectOf(t)))}</span>${t.subProject ? `<span class="badge">↳ ${esc(t.subProject)}</span>` : ''}
+          <span class="badge ${sClass[t.status] || ''}">${esc(sLabel(t.status))}</span>
+          <span class="badge p-${esc(t.priority)}">${esc(pLabel(t.priority))}</span>
+          <span class="ti-deadline">${t.deadline ? '📅 ' + esc(t.deadline) : L('noDeadline')}</span>
+        </div>
+        <div class="ti-actions">
+          <button class="secondary" onclick="startEdit('${t.id}')">${L('edit')}</button>
+          <button class="danger" onclick="removeTask('${t.id}')">${L('del')}</button>
+        </div>
+        ${t.notes ? `<div class="ti-notes">${esc(t.notes)}</div>` : ''}
+      </div>`).join('');
+  }
+
+  function renderKanban(list) {
+    document.querySelectorAll('.col').forEach((col, i) => {
+      const status = col.dataset.status;
+      const items = list.filter(t => t.status === status);
+      $('c' + i).textContent = items.length;
+      col.querySelector('.items').innerHTML = items.length ? items.map(t => `
+        <div class="kcard ${isOverdue(t) ? 'overdue' : ''}" draggable="true" data-id="${t.id}"
+             ondragstart="onDragStart(event)">
+          <div class="t">${esc(t.title)}</div>
+          <div class="meta">
+            <span class="badge">${esc(pName(projectOf(t)))}</span>${t.subProject ? `<span class="badge">↳ ${esc(t.subProject)}</span>` : ''}
+            <span class="badge p-${esc(t.priority)}">${esc(pLabel(t.priority))}</span>
+            <span class="${isOverdue(t) ? 'overdue-text' : ''}" style="${isOverdue(t) ? 'color:var(--danger);font-weight:600' : ''}">
+              ${t.deadline ? '📅 ' + esc(t.deadline) : ''}
+            </span>
+          </div>
+          ${t.notes ? `<div class="n">${esc(t.notes)}</div>` : ''}
+          <div class="actions">
+            <button class="secondary" onclick="startEdit('${t.id}')">${L('edit')}</button>
+            <button class="danger" onclick="removeTask('${t.id}')">${L('del')}</button>
+          </div>
+        </div>`).join('') : `<div class="empty" style="padding:12px">${L('dropHere')}</div>`;
+    });
+  }
+
+  function render() {
+    refreshProjectOptions();
+    renderStats();
+    const list = filtered();
+    renderGantt(list);
+    renderKanban(list);
+    renderList(list);
+  }
+
+
+  // Kéo thả trên Kanban
+  window.onDragStart = e => e.dataTransfer.setData('text/plain', e.currentTarget.dataset.id);
+  document.querySelectorAll('.col').forEach(col => {
+    col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('drop'); });
+    col.addEventListener('dragleave', () => col.classList.remove('drop'));
+    col.addEventListener('drop', e => {
+      e.preventDefault();
+      col.classList.remove('drop');
+      const id = e.dataTransfer.getData('text/plain');
+      const t = tasks.find(x => x.id === id);
+      if (t && t.status !== col.dataset.status) changeStatus(id, col.dataset.status);
+    });
+  });
+
+  // ===== GANTT =====
+  const ganttLabelW = () => (window.matchMedia('(max-width:640px)').matches ? 140 : 220); // khớp với CSS .g-label
+  const DAY_PX = 26;           // chiều rộng một ngày trên trục thời gian
+  const dayNum = s => Date.parse(s + 'T00:00:00Z') / 86400000;
+  const dayToDate = n => new Date(n * 86400000);
+
+  function renderGantt(list) {
+    const dated = list.filter(t => t.startDate || t.deadline);
+    const undated = list.length - dated.length;
+    $('noDateNote').textContent = undated ? L('noDate')(undated) : '';
+
+    if (!dated.length) {
+      $('gantt').innerHTML = `<div class="empty">${L('noDateAll')}</div>`;
+      return;
+    }
+
+    // Chuẩn hóa khoảng thời gian cho từng việc
+    const items = dated.map(t => {
+      const s = dayNum(t.startDate || t.deadline);
+      const e = Math.max(s, dayNum(t.deadline || t.startDate));
+      return { ...t, s, e };
+    });
+
+    // Khoảng thời gian hiển thị: bao trọn mọi việc và hôm nay, đệm 2 ngày mỗi bên
+    const todayN = dayNum(today());
+    const min = Math.min(...items.map(i => i.s), todayN) - 2;
+    const max = Math.max(...items.map(i => i.e), todayN) + 2;
+    const N = max - min + 1;
+    const W = N * DAY_PX;
+
+    // Header: nhóm theo tháng và ngày
+    const monthSegs = [];
+    const dayCells = [];
+    for (let i = 0; i < N; i++) {
+      const d = dayToDate(min + i);
+      const key = (d.getUTCMonth() + 1) + '/' + d.getUTCFullYear();
+      if (!monthSegs.length || monthSegs[monthSegs.length - 1].key !== key) monthSegs.push({ key, n: 0 });
+      monthSegs[monthSegs.length - 1].n++;
+      const dow = d.getUTCDay();
+      dayCells.push(`<div class="${dow === 0 || dow === 6 ? 'we' : ''}" style="width:${DAY_PX}px">${d.getUTCDate()}</div>`);
+    }
+    const monthsHtml = monthSegs.map(m => `<div style="width:${m.n * DAY_PX}px">${L('month')(m.key)}</div>`).join('');
+
+    // Nhóm theo dự án, rồi theo sub-project
+    const groups = {};
+    items.forEach(i => { const p = projectOf(i); (groups[p] = groups[p] || []).push(i); });
+    const names = Object.keys(groups).sort((a, b) => a.localeCompare(b, lang));
+
+    const taskRow = t => {
+      const cls = isOverdue(t) ? 'b-over' : t.status === 'Hoàn thành' ? 'b-done' : t.status === 'Đang làm' ? 'b-doing' : 'b-todo';
+      const left = (t.s - min) * DAY_PX;
+      const width = (t.e - t.s + 1) * DAY_PX;
+      const range = (t.startDate || '?') + ' → ' + (t.deadline || '?');
+      return `<div class="g-row">
+        <div class="g-label" title="${esc(t.title)}">${esc(t.title)}</div>
+        <div class="g-track" style="width:${W}px">
+          <div class="g-bar ${cls}" style="left:${left}px;width:${width}px"
+               title="${esc(t.title)} | ${esc(range)} | ${esc(t.status)}"
+               onclick="startEdit('${t.id}')">${esc(t.title)}</div>
+        </div>
+      </div>`;
+    };
+
+    let rows = '';
+    names.forEach(p => {
+      rows += `<div class="g-row g-proj">
+        <div class="g-label">📁 ${esc(pName(p))}</div>
+        <div class="g-track" style="width:${W}px"></div>
+      </div>`;
+      const list = groups[p];
+      list.filter(t => !t.subProject).sort((a, b) => a.s - b.s).forEach(t => { rows += taskRow(t); });
+      const subs = [...new Set(list.map(t => t.subProject).filter(Boolean))].sort((a, b) => a.localeCompare(b, lang));
+      subs.forEach(sb => {
+        rows += `<div class="g-row g-sub">
+          <div class="g-label">↳ ${esc(sb)}</div>
+          <div class="g-track" style="width:${W}px"></div>
+        </div>`;
+        list.filter(t => t.subProject === sb).sort((a, b) => a.s - b.s).forEach(t => { rows += taskRow(t); });
+      });
+    });
+
+    const todayLeft = ganttLabelW() + (todayN - min) * DAY_PX + DAY_PX / 2;
+
+    $('gantt').innerHTML = `
+      <div class="g-wrap">
+        <div class="g-inner">
+          <div class="g-head">
+            <div class="g-label">${L('gridHead')}</div>
+            <div class="g-track" style="width:${W}px">
+              <div class="g-months">${monthsHtml}</div>
+              <div class="g-days">${dayCells.join('')}</div>
+            </div>
+          </div>
+          <div class="g-body">
+            ${rows}
+            <div class="g-today" style="left:${todayLeft}px"></div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function resetForm() {
+    editingId = null;
+    $('title').value = ''; $('notes').value = ''; $('deadline').value = ''; $('startDate').value = ''; $('project').value = ''; $('subProject').value = '';
+    $('status').value = 'Chưa làm'; $('priority').value = 'Trung';
+    $('submit').textContent = L('add');
+    $('formTitle').textContent = L('formNew');
+  }
+
+  function openModal() {
+    $('modal').style.display = 'flex';
+    setTimeout(() => $('title').focus(), 0);
+  }
+
+  function closeModal() {
+    resetForm();
+    $('modal').style.display = 'none';
+  }
+
+  $('openAdd').onclick = () => { resetForm(); openModal(); };
+  $('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('modal').style.display !== 'none') closeModal(); });
+
+  $('submit').onclick = () => {
+    const title = $('title').value.trim();
+    if (!title) { alert(L('needTitle')); return; }
+    if ($('startDate').value && $('deadline').value && $('startDate').value > $('deadline').value) {
+      alert(L('startAfter')); return;
+    }
+    const data = {
+      title,
+      project: $('project').value.trim(),
+      subProject: $('subProject').value.trim(),
+      status: $('status').value,
+      priority: $('priority').value,
+      startDate: $('startDate').value,
+      deadline: $('deadline').value,
+      notes: $('notes').value.trim(),
+      updatedAt: new Date().toISOString()
+    };
+    if (editingId) {
+      tasks = tasks.map(t => t.id === editingId ? { ...t, ...data } : t);
+    } else {
+      tasks.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), ...data });
+    }
+    closeModal();
+    persist();
+  };
+
+  $('cancel').onclick = closeModal;
+
+  window.startEdit = id => {
+    const t = tasks.find(x => x.id === id);
+    if (!t) return;
+    editingId = id;
+    $('title').value = t.title; $('project').value = t.project || ''; $('subProject').value = t.subProject || '';
+    $('notes').value = t.notes || ''; $('deadline').value = t.deadline || '';
+    $('startDate').value = t.startDate || '';
+    $('status').value = t.status; $('priority').value = t.priority;
+    $('submit').textContent = L('update');
+    $('formTitle').textContent = L('formEdit');
+    openModal();
+  };
+
+  window.changeStatus = (id, status) => {
+    tasks = tasks.map(t => t.id === id ? { ...t, status, updatedAt: new Date().toISOString() } : t);
+    persist();
+  };
+
+  window.removeTask = id => {
+    if (!confirm(L('confirmDel'))) return;
+    tasks = tasks.filter(t => t.id !== id);
+    persist();
+  };
+
+  $('saveUrl').onclick = () => {
+    gsUrl = $('url').value.trim();
+    syncSecret = $('secret').value.trim();
+    localStorage.setItem('syncSecret', syncSecret);
+    localStorage.setItem('gsUrl', gsUrl);
+    setSync(gsUrl ? 'urlChecking' : 'sync_local');
+    if (gsUrl) pushToSheet();
+    $('settingsModal').style.display = 'none';
+  };
+
+  $('pull').onclick = pullFromSheet;
+
+  $('openSettings').onclick = () => {
+    $('url').value = gsUrl;
+    $('secret').value = syncSecret;
+    $('settingsModal').style.display = 'flex';
+  };
+  $('closeSettings').onclick = () => { $('settingsModal').style.display = 'none'; };
+  $('settingsModal').addEventListener('click', e => {
+    if (e.target.id === 'settingsModal') $('settingsModal').style.display = 'none';
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && $('settingsModal').style.display !== 'none') $('settingsModal').style.display = 'none';
+  });
+  $('search').oninput = render;
+  $('filterStatus').onchange = render;
+  $('filterProject').onchange = () => { $('filterSub').value = ''; render(); };
+  $('filterSub').onchange = render;
+  $('project').oninput = refreshProjectOptions;
+
+  // ===== CHỦ ĐỀ GIAO DIỆN =====
+  const THEMES = ['minimal', 'dark', 'indigo', 'ocean', 'warm'];
+  function applyTheme(name) {
+    if (!THEMES.includes(name)) name = 'minimal';
+    document.documentElement.dataset.theme = name;
+    localStorage.setItem('theme', name);
+    $('themeSelect').value = name;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = getComputedStyle(document.documentElement).getPropertyValue('--header').trim() || '#4f46e5';
+  }
+  $('themeSelect').onchange = e => applyTheme(e.target.value);
+  applyTheme(localStorage.getItem('theme') || 'minimal');
+  window.matchMedia('(max-width:640px)').addEventListener('change', render);
+  // ===== ĐĂNG NHẬP GOOGLE =====
+  function userKey() { return 'tasks_' + (user ? user.sub : 'guest'); }
+  function authPayload() { return AUTH_ENABLED ? { idToken } : { secret: syncSecret }; }
+  function authQuery() {
+    return AUTH_ENABLED ? 'idToken=' + encodeURIComponent(idToken) : 'secret=' + encodeURIComponent(syncSecret);
+  }
+  function tokenFresh() { return !!idToken && Date.now() / 1000 < tokenExp - 60; }
+  function requestRefresh(wantPush) {
+    pendingPush = wantPush;
+    setSync('sync_expired');
+    if (window.google) google.accounts.id.prompt();
+  }
+  function decodeJwt(token) {
+    const b = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(decodeURIComponent(atob(b).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+  }
+  function initAuth() {
+    if (!AUTH_ENABLED || !window.google) return;
+    if (GOOGLE_CLIENT_ID.startsWith('YOUR_')) { updateAuthUI(); return; }
+    google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleCredential, auto_select: true });
+    google.accounts.id.renderButton($('gBtn'), { theme: 'outline', size: 'large', shape: 'pill', width: 280 });
+    google.accounts.id.prompt();
+  }
+  // Được Google gọi sau khi đăng nhập hoặc làm mới token
+  function handleCredential(resp) {
+    idToken = resp.credential;
+    const p = decodeJwt(idToken);
+    user = { sub: p.sub, email: p.email, name: p.name || p.email };
+    tokenExp = p.exp;
+    // Dữ liệu cũ (lưu trước khi có đăng nhập) được chuyển cho tài khoản đầu tiên đăng nhập
+    const legacy = localStorage.getItem('tasks');
+    if (legacy) {
+      if (!localStorage.getItem(userKey())) localStorage.setItem(userKey(), legacy);
+      localStorage.removeItem('tasks');
+    }
+    tasks = JSON.parse(localStorage.getItem(userKey()) || '[]').map(normalize);
+    updateAuthUI();
+    render();
+    if (pendingPush) { pendingPush = false; pushToSheet(); }
+    else if (gsUrl) pullFromSheet();
+  }
+  function signOut() {
+    user = null; idToken = null; tokenExp = 0; tasks = [];
+    if (window.google) google.accounts.id.disableAutoSelect();
+    setSync('sync_local');
+    updateAuthUI();
+    render();
+  }
+  function updateAuthUI() {
+    const on = !!user;
+    $('mainView').style.display = on ? '' : 'none';
+    $('authView').style.display = on ? 'none' : '';
+    ['openAdd', 'openSettings'].forEach(id => { $(id).style.display = on ? '' : 'none'; });
+    $('signOut').style.display = (on && AUTH_ENABLED) ? '' : 'none';
+    $('userBox').textContent = (on && AUTH_ENABLED) ? (user.name || user.email) : '';
+    $('authMsg').textContent = GOOGLE_CLIENT_ID.startsWith('YOUR_') ? L('loginNotConfigured') : '';
+  }
+  $('signOut').onclick = signOut;
+
+  // ===== ÁP DỤNG NGÔN NGỮ =====
+  function applyI18n() {
+    document.documentElement.lang = lang;
+    document.title = L('appName');
+    const appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+    if (appleTitle) appleTitle.content = L('appName');
+    document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = L(el.dataset.i18n); });
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = L(el.dataset.i18nPh); });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = L(el.dataset.i18nTitle); });
+    const cur = document.documentElement.dataset.theme || 'minimal';
+    $('themeSelect').innerHTML = THEMES.map(k => `<option value="${k}">🎨 ${L('th_' + k)}</option>`).join('');
+    $('themeSelect').value = cur;
+    $('langSelect').innerHTML = '<option value="vi">🇻🇳 Tiếng Việt</option><option value="en">🇬🇧 English</option>';
+    $('langSelect').value = lang;
+    $('submit').textContent = editingId ? L('update') : L('add');
+    $('formTitle').textContent = editingId ? L('formEdit') : L('formNew');
+    renderSync();
+  }
+  function applyLang(l) {
+    lang = I18N[l] ? l : 'vi';
+    localStorage.setItem('lang', lang);
+    applyI18n();
+    render();
+  }
+  $('langSelect').onchange = e => applyLang(e.target.value);
+
+  setSync('sync_local');
+  applyI18n();
+  $('url').value = gsUrl;
+  $('secret').value = syncSecret;
+  if (!AUTH_ENABLED) {
+    user = { sub: 'local', name: 'Local' };
+    tasks = JSON.parse(localStorage.getItem(userKey()) || '[]').map(normalize);
+  }
+  updateAuthUI();
+  render();
+  if (!AUTH_ENABLED && gsUrl && syncSecret) pullFromSheet();
+</script>
+</body>
+</html>
