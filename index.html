@@ -386,7 +386,10 @@
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const today = () => new Date().toISOString().slice(0,10);
+  const today = () => {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  };
 
   function normalize(t) {
     return {
@@ -724,7 +727,15 @@
     $('modal').style.display = 'none';
   }
 
-  $('openAdd').onclick = () => { resetForm(); openModal(); };
+  // Mặc định cho công việc mới: ngày hôm nay, dự án và sub-project gần nhất đã dùng
+  function fillNewDefaults() {
+    $('startDate').value = today();
+    $('deadline').value = today();
+    $('project').value = localStorage.getItem('lastProject') || '';
+    $('subProject').value = localStorage.getItem('lastSub') || '';
+    refreshProjectOptions();
+  }
+  $('openAdd').onclick = () => { resetForm(); fillNewDefaults(); openModal(); };
   $('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('modal').style.display !== 'none') closeModal(); });
 
@@ -750,6 +761,8 @@
     } else {
       tasks.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), ...data });
     }
+    localStorage.setItem('lastProject', data.project);
+    localStorage.setItem('lastSub', data.subProject);
     closeModal();
     persist();
   };
