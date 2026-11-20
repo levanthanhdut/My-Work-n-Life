@@ -207,7 +207,7 @@
     <span id="userBox" style="font-size:.85rem;opacity:.9"></span>
     <button id="signOut" class="hbtn" data-i18n="signOut" style="display:none"></button>
     <button id="openAdd" class="hbtn" data-i18n="addTask"></button>
-    <button id="openSettings" class="hbtn" data-i18n="sheetBtn"></button>
+    <button id="reloadBtn" class="hbtn" data-i18n="reloadBtn"></button>
   </div>
 </header>
 
@@ -316,21 +316,6 @@
 
 </main>
 
-<div class="overlay" id="settingsModal" style="display:none">
-  <section class="card modal" style="max-width:560px">
-    <h2 data-i18n="sheetTitle"></h2>
-    <p style="color:var(--muted);font-size:.9rem;margin:0 0 12px" data-i18n="sheetDesc"></p>
-    <div class="row">
-      <input id="url" data-i18n-ph="urlPh">
-      <input id="secret" type="password" data-i18n-ph="secretPh">
-    </div>
-    <div class="row" style="margin-top:12px">
-      <button id="saveUrl" data-i18n="saveSync"></button>
-      <button id="pull" class="secondary" data-i18n="pullSheet"></button>
-      <button id="closeSettings" class="secondary" data-i18n="close"></button>
-    </div>
-  </section>
-</div>
 <div class="overlay" id="confirmModal" style="display:none">
   <section class="card modal" style="max-width:380px;text-align:center">
     <p id="confirmText" style="margin:8px 0 16px;font-size:1rem"></p>
@@ -356,7 +341,7 @@
       loginTitle:'Đăng nhập để xem công việc của bạn', loginDesc:'Mỗi tài khoản Google có dữ liệu riêng.',
       signOut:'Đăng xuất', loginNotConfigured:'Chưa cấu hình Google Client ID trong file.',
       sync_expired:'⚠️ Phiên đăng nhập đã hết hạn, đang làm mới...',
-      addTask:'+ Thêm công việc', sheetBtn:'⚙️ Google Sheet', themeTitle:'Đổi giao diện',
+      addTask:'+ Thêm công việc', reloadBtn:'🔄 Tải lại từ Sheet', themeTitle:'Đổi giao diện',
       searchPh:'🔍 Tìm theo tên hoặc ghi chú', allStatus:'Tất cả trạng thái', allProjects:'Tất cả dự án', allSubs:'Tất cả sub-project', subPh:'Sub-project (tùy chọn)', repeatLabel:'Lặp lại', dup:'Nhân bản', dupSuffix:' (bản sao)', rep_none:'Không lặp', rep_daily:'Hàng ngày', rep_weekly:'Hàng tuần', rep_monthly:'Hàng tháng', rep_wdays:'Hàng tuần theo thứ', dayErr:'Hãy chọn ít nhất một ngày trong tuần',
       st_todo:'Chưa làm', st_doing:'Đang làm', st_done:'Hoàn thành',
       pr_high:'Cao', pr_mid:'Trung', pr_low:'Thấp', noProject:'Chưa phân loại',
@@ -389,7 +374,7 @@
       loginTitle:'Sign in to see your tasks', loginDesc:'Each Google account has its own data.',
       signOut:'Sign out', loginNotConfigured:'Google Client ID is not configured in the file.',
       sync_expired:'⚠️ Session expired, refreshing...',
-      addTask:'+ Add task', sheetBtn:'⚙️ Google Sheet', themeTitle:'Change theme',
+      addTask:'+ Add task', reloadBtn:'🔄 Reload from Sheet', themeTitle:'Change theme',
       searchPh:'🔍 Search by name or notes', allStatus:'All statuses', allProjects:'All projects', allSubs:'All sub-projects', subPh:'Sub-project (optional)', repeatLabel:'Repeat', dup:'Duplicate', dupSuffix:' (copy)', rep_none:'No repeat', rep_daily:'Daily', rep_weekly:'Weekly', rep_monthly:'Monthly', rep_wdays:'Weekly on days', dayErr:'Please select at least one weekday',
       st_todo:'To do', st_doing:'In progress', st_done:'Done',
       pr_high:'High', pr_mid:'Medium', pr_low:'Low', noProject:'Uncategorized',
@@ -433,8 +418,8 @@
   const pName = p => (p === NO_PROJECT ? L('noProject') : p);
   let tasks = [];
   let user = null, idToken = null, tokenExp = 0, pendingPush = false;
-  let gsUrl = localStorage.getItem('gsUrl') || '';
-  let syncSecret = localStorage.getItem('syncSecret') || '';
+  // Địa chỉ Apps Script (web app) để đồng bộ với Google Sheet
+  const gsUrl = 'https://script.google.com/macros/s/AKfycbwMbrvZNT-5AJe8-okQz8w5Wd4dXFnqrXe4tgekoKlAmcWumEAW2pJs_wvAtARx2CPT0Q/exec';
   let editingId = null;
   const STATUSES = ['Chưa làm', 'Đang làm', 'Hoàn thành'];
   const NO_PROJECT = 'Chưa phân loại';
@@ -479,7 +464,6 @@
   async function pushToSheet() {
     if (!user) return;
     if (!gsUrl) { setSync('sync_localNoUrl'); return; }
-    if (!AUTH_ENABLED && !syncSecret) { setSync('noSecret'); return; }
     if (AUTH_ENABLED && !tokenFresh()) { requestRefresh(true); return; }
     setSync('sync_busy');
     try {
@@ -520,7 +504,6 @@
   async function pullFromSheet() {
     if (!user) return;
     if (!gsUrl) { alert(L('needUrl')); return; }
-    if (!AUTH_ENABLED && !syncSecret) { setSync('noSecret'); return; }
     if (AUTH_ENABLED && !tokenFresh()) { requestRefresh(false); return; }
     setSync('loading');
     try {
@@ -1137,30 +1120,7 @@
     }
   };
 
-  $('saveUrl').onclick = () => {
-    gsUrl = $('url').value.trim();
-    syncSecret = $('secret').value.trim();
-    localStorage.setItem('syncSecret', syncSecret);
-    localStorage.setItem('gsUrl', gsUrl);
-    setSync(gsUrl ? 'urlChecking' : 'sync_local');
-    if (gsUrl) pushToSheet();
-    $('settingsModal').style.display = 'none';
-  };
-
-  $('pull').onclick = pullFromSheet;
-
-  $('openSettings').onclick = () => {
-    $('url').value = gsUrl;
-    $('secret').value = syncSecret;
-    $('settingsModal').style.display = 'flex';
-  };
-  $('closeSettings').onclick = () => { $('settingsModal').style.display = 'none'; };
-  $('settingsModal').addEventListener('click', e => {
-    if (e.target.id === 'settingsModal') $('settingsModal').style.display = 'none';
-  });
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && $('settingsModal').style.display !== 'none') $('settingsModal').style.display = 'none';
-  });
+  $('reloadBtn').onclick = pullFromSheet;
   $('search').oninput = render;
   $('filterStatus').onchange = render;
   $('filterProject').onchange = () => { $('filterSub').value = ''; render(); };
@@ -1182,9 +1142,9 @@
   window.matchMedia('(max-width:640px)').addEventListener('change', render);
   // ===== ĐĂNG NHẬP GOOGLE =====
   function userKey() { return 'tasks_' + (user ? user.sub : 'guest'); }
-  function authPayload() { return AUTH_ENABLED ? { idToken } : { secret: syncSecret }; }
+  function authPayload() { return { idToken }; }
   function authQuery() {
-    return AUTH_ENABLED ? 'idToken=' + encodeURIComponent(idToken) : 'secret=' + encodeURIComponent(syncSecret);
+    return 'idToken=' + encodeURIComponent(idToken);
   }
   function tokenFresh() { return !!idToken && Date.now() / 1000 < tokenExp - 60; }
   function requestRefresh(wantPush) {
@@ -1235,7 +1195,7 @@
     const on = !!user;
     $('mainView').style.display = on ? '' : 'none';
     $('authView').style.display = on ? 'none' : '';
-    ['openAdd', 'openSettings'].forEach(id => { $(id).style.display = on ? '' : 'none'; });
+    ['openAdd', 'reloadBtn'].forEach(id => { $(id).style.display = on ? '' : 'none'; });
     $('signOut').style.display = (on && AUTH_ENABLED) ? '' : 'none';
     $('userBox').textContent = (on && AUTH_ENABLED) ? (user.name || user.email) : '';
     $('authMsg').textContent = GOOGLE_CLIENT_ID.startsWith('YOUR_') ? L('loginNotConfigured') : '';
@@ -1272,8 +1232,6 @@
 
   setSync('sync_local');
   applyI18n();
-  $('url').value = gsUrl;
-  $('secret').value = syncSecret;
   if (AUTH_ENABLED) {
     const saved = JSON.parse(localStorage.getItem('authSession') || 'null');
     if (saved && saved.exp - 60 > Date.now() / 1000) handleCredential({ credential: saved.idToken });
@@ -1285,7 +1243,6 @@
   }
   updateAuthUI();
   render();
-  if (!AUTH_ENABLED && gsUrl && syncSecret) pullFromSheet();
 </script>
 </body>
 </html>
