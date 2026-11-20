@@ -751,16 +751,17 @@
     else if (rep === 'monthly') dt.setUTCMonth(dt.getUTCMonth() + 1);
     return dt.toISOString().slice(0, 10);
   }
-  function maybeSpawn(prev, newStatus) {
-    if (newStatus !== 'Hoàn thành' || prev.status === 'Hoàn thành' || !prev.repeat || spawned.has(prev.id)) return;
-    spawned.add(prev.id);
+  // cur: công việc với giá trị MỚI nhất; prevStatus: trạng thái trước khi thay đổi
+  function maybeSpawn(cur, prevStatus) {
+    if (cur.status !== 'Hoàn thành' || prevStatus === 'Hoàn thành' || !cur.repeat || spawned.has(cur.id)) return;
+    spawned.add(cur.id);
     localStorage.setItem('spawnedIds', JSON.stringify([...spawned]));
     tasks.push({
-      ...prev,
+      ...cur,
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       status: 'Chưa làm',
-      startDate: shiftDate(prev.startDate, prev.repeat),
-      deadline: shiftDate(prev.deadline, prev.repeat),
+      startDate: shiftDate(cur.startDate, cur.repeat),
+      deadline: shiftDate(cur.deadline, cur.repeat),
       updatedAt: new Date().toISOString()
     });
   }
@@ -817,7 +818,7 @@
     if (editingId) {
       const prev = tasks.find(t => t.id === editingId);
       tasks = tasks.map(t => t.id === editingId ? { ...t, ...data } : t);
-      if (prev) maybeSpawn(prev, data.status);
+      if (prev) maybeSpawn({ ...prev, ...data, id: editingId }, prev.status);
     } else {
       tasks.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), ...data });
     }
@@ -845,7 +846,7 @@
   window.changeStatus = (id, status) => {
     const prev = tasks.find(t => t.id === id);
     tasks = tasks.map(t => t.id === id ? { ...t, status, updatedAt: new Date().toISOString() } : t);
-    if (prev) maybeSpawn(prev, status);
+    if (prev) maybeSpawn({ ...prev, status }, prev.status);
     persist();
   };
 
