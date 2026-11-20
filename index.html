@@ -137,6 +137,8 @@
   .kcard { background:var(--card); border-radius:12px; padding:10px; margin-bottom:8px; box-shadow:0 1px 2px var(--shadow); cursor:grab; border-left:4px solid var(--primary); }
   .kcard.overdue { border-left-color:var(--danger); }
   .kcard .t { font-weight:600; margin-bottom:6px; overflow-wrap:anywhere; word-break:break-word; }
+  .work-fields { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .work-fields input { flex:1 1 200px; }
   .field { position:relative; flex:1 1 140px; min-width:140px; display:flex; }
   .field input { flex:1; width:100%; padding-right:30px; }
   .clear-btn { position:absolute; right:4px; top:50%; transform:translateY(-50%); background:transparent; color:var(--muted); border:none; padding:2px 6px; min-height:0; line-height:1; font-size:1rem; }
@@ -284,6 +286,11 @@
       <input id="deadline" type="date" data-i18n-title="deadline">
     </div>
     <div style="margin-top:8px"><textarea id="notes" data-i18n-ph="notesPh"></textarea></div>
+    <div class="work-fields" id="workFields" style="display:none">
+      <input id="wLibName" placeholder="Lib name">
+      <input id="wCellName" placeholder="Cell name">
+      <input id="wDesignerName" placeholder="Designer name">
+    </div>
     <div class="row" style="margin-top:8px">
       <button id="submit"></button>
       <button id="cancel" class="secondary" data-i18n="close"></button>
@@ -438,6 +445,9 @@
       project: (t.project || '').trim(),
       subProject: (t.subProject || '').trim(),
       repeat: t.repeat || '',
+      libName: t.libName || '',
+      cellName: t.cellName || '',
+      designerName: t.designerName || '',
       startDate: cleanDate(t.startDate),
       deadline: cleanDate(t.deadline)
     };
@@ -604,7 +614,7 @@
         <div class="ti-meta">
           <span class="badge">${esc(pName(projectOf(t)))}</span>${t.subProject ? `<span class="badge">↳ ${esc(t.subProject)}</span>` : ''}
           <span class="badge ${sClass[t.status] || ''}">${esc(sLabel(t.status))}</span>
-          <span class="badge p-${esc(t.priority)}">${esc(pLabel(t.priority))}</span>${t.repeat ? `<span class="badge">${repLabel(t.repeat)}</span>` : ''}
+          <span class="badge p-${esc(t.priority)}">${esc(pLabel(t.priority))}</span>${t.repeat ? `<span class="badge">${repLabel(t.repeat)}</span>` : ''}${workInfo(t)}
           <span class="ti-deadline">${t.deadline ? '📅 ' + esc(t.deadline) : L('noDeadline')}</span>
         </div>
         <div class="ti-actions">
@@ -625,7 +635,7 @@
           <div class="t"><span class="drag-handle" draggable="true" ondragstart="onDragStart(event)" title="Kéo để chuyển cột">⠿</span>${esc(t.title)}</div>
           <div class="meta">
             <span class="badge">${esc(pName(projectOf(t)))}</span>${t.subProject ? `<span class="badge">↳ ${esc(t.subProject)}</span>` : ''}
-            <span class="badge p-${esc(t.priority)}">${esc(pLabel(t.priority))}</span>${t.repeat ? `<span class="badge">${repLabel(t.repeat)}</span>` : ''}
+            <span class="badge p-${esc(t.priority)}">${esc(pLabel(t.priority))}</span>${t.repeat ? `<span class="badge">${repLabel(t.repeat)}</span>` : ''}${workInfo(t)}
             <span class="${isOverdue(t) ? 'overdue-text' : ''}" style="${isOverdue(t) ? 'color:var(--danger);font-weight:600' : ''}">
               ${t.deadline ? '📅 ' + esc(t.deadline) : ''}
             </span>
@@ -890,16 +900,29 @@
     });
   }
   const repLabel = r => (r ? '🔁 ' + L('rep_' + r) : '');
+  const workInfo = t => {
+    const parts = [
+      t.libName && 'Lib: ' + t.libName,
+      t.cellName && 'Cell: ' + t.cellName,
+      t.designerName && 'Designer: ' + t.designerName
+    ].filter(Boolean);
+    return parts.length ? `<span class="badge">🧩 ${esc(parts.join(' · '))}</span>` : '';
+  };
 
   function resetForm() {
     editingId = null;
-    $('title').value = ''; $('notes').value = ''; $('deadline').value = ''; $('startDate').value = ''; $('project').value = ''; $('subProject').value = ''; $('repeat').value = '';
+    $('title').value = ''; $('notes').value = ''; $('deadline').value = ''; $('startDate').value = ''; $('project').value = ''; $('subProject').value = ''; $('repeat').value = ''; ['wLibName','wCellName','wDesignerName'].forEach(id => { $(id).value = ''; });
     $('status').value = 'Chưa làm'; $('priority').value = 'Trung';
     $('submit').textContent = L('add');
     $('formTitle').textContent = L('formNew');
   }
 
+  function isWorkProject(p) { return String(p || '').trim().toLowerCase() === 'work'; }
+  function toggleWorkFields() {
+    $('workFields').style.display = isWorkProject($('project').value) ? '' : 'none';
+  }
   function toggleClear() {
+    toggleWorkFields();
     $('clearProject').hidden = !$('project').value;
     $('clearSub').hidden = !$('subProject').value;
   }
@@ -950,6 +973,9 @@
       project: $('project').value.trim(),
       subProject: $('subProject').value.trim(),
       repeat: $('repeat').value,
+      libName: isWorkProject($('project').value) ? $('wLibName').value.trim() : '',
+      cellName: isWorkProject($('project').value) ? $('wCellName').value.trim() : '',
+      designerName: isWorkProject($('project').value) ? $('wDesignerName').value.trim() : '',
       status: $('status').value,
       priority: $('priority').value,
       startDate: $('startDate').value,
@@ -977,6 +1003,8 @@
     if (!t) return;
     editingId = id;
     $('title').value = t.title; $('project').value = t.project || ''; $('subProject').value = t.subProject || ''; $('repeat').value = t.repeat || '';
+    $('wLibName').value = t.libName || '';
+    $('wCellName').value = t.cellName || ''; $('wDesignerName').value = t.designerName || '';
     $('notes').value = t.notes || ''; $('deadline').value = t.deadline || '';
     $('startDate').value = t.startDate || '';
     $('status').value = t.status; $('priority').value = t.priority;
