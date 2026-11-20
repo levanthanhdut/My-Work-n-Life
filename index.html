@@ -104,6 +104,11 @@
   .g-days .we { background:var(--track); }
   .g-bar { position:absolute; top:7px; height:24px; border-radius:7px; color:#fff; font-size:.75rem; line-height:24px; padding:0 6px; overflow:hidden; white-space:nowrap; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,.15); }
   .g-bar:hover { opacity:.85; }
+  .g-bar { cursor:grab; touch-action:none; user-select:none; }
+  .g-bar:active { cursor:grabbing; }
+  .g-handle { position:absolute; top:0; bottom:0; width:8px; cursor:ew-resize; background:rgba(255,255,255,.35); }
+  .g-handle.l { left:0; border-radius:6px 0 0 6px; }
+  .g-handle.r { right:0; border-radius:0 6px 6px 0; }
   .g-bar { text-shadow:0 1px 2px rgba(0,0,0,.35); }
   .b-todo { background:var(--todo); }
   .b-doing { background:var(--primary); }
@@ -128,10 +133,13 @@
   .kcard { background:var(--card); border-radius:12px; padding:10px; margin-bottom:8px; box-shadow:0 1px 2px var(--shadow); cursor:grab; border-left:4px solid var(--primary); }
   .kcard.overdue { border-left-color:var(--danger); }
   .kcard .t { font-weight:600; margin-bottom:6px; overflow-wrap:anywhere; word-break:break-word; }
+  .drag-handle { cursor:grab; color:var(--muted); margin-right:6px; user-select:none; padding:0 2px; }
   .kcard .meta { display:flex; gap:6px; flex-wrap:wrap; align-items:center; font-size:.78rem; color:var(--muted); }
   .kcard .n { font-size:.82rem; color:var(--muted); margin-top:6px; white-space:pre-wrap; }
   .kcard .actions { margin-top:8px; display:flex; gap:6px; }
   .kcard .actions button { padding:4px 8px; font-size:.8rem; }
+  .kcard .actions button.icon-btn { padding:4px 10px; font-size:1rem; line-height:1.2; }
+  .kcard .actions button.ok { background:rgba(22,163,74,.15); }
 
   /* Danh sách */
   .task-list { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
@@ -291,6 +299,15 @@
     </div>
   </section>
 </div>
+<div class="overlay" id="confirmModal" style="display:none">
+  <section class="card modal" style="max-width:380px;text-align:center">
+    <p id="confirmText" style="margin:8px 0 16px;font-size:1rem"></p>
+    <div class="row" style="justify-content:center">
+      <button id="confirmYes" class="danger" data-i18n="del"></button>
+      <button id="confirmNo" class="secondary" data-i18n="close"></button>
+    </div>
+  </section>
+</div>
 <script>
 
   // ===== CẤU HÌNH GOOGLE =====
@@ -308,7 +325,7 @@
       signOut:'Đăng xuất', loginNotConfigured:'Chưa cấu hình Google Client ID trong file.',
       sync_expired:'⚠️ Phiên đăng nhập đã hết hạn, đang làm mới...',
       addTask:'+ Thêm công việc', sheetBtn:'⚙️ Google Sheet', themeTitle:'Đổi giao diện',
-      searchPh:'🔍 Tìm theo tên hoặc ghi chú', allStatus:'Tất cả trạng thái', allProjects:'Tất cả dự án', allSubs:'Tất cả sub-project', subPh:'Sub-project (tùy chọn)', repeatLabel:'Lặp lại', rep_none:'Không lặp', rep_daily:'Hàng ngày', rep_weekly:'Hàng tuần', rep_monthly:'Hàng tháng',
+      searchPh:'🔍 Tìm theo tên hoặc ghi chú', allStatus:'Tất cả trạng thái', allProjects:'Tất cả dự án', allSubs:'Tất cả sub-project', subPh:'Sub-project (tùy chọn)', repeatLabel:'Lặp lại', dup:'Nhân bản', dupSuffix:' (bản sao)', rep_none:'Không lặp', rep_daily:'Hàng ngày', rep_weekly:'Hàng tuần', rep_monthly:'Hàng tháng',
       st_todo:'Chưa làm', st_doing:'Đang làm', st_done:'Hoàn thành',
       pr_high:'Cao', pr_mid:'Trung', pr_low:'Thấp', noProject:'Chưa phân loại',
       projectProgress:'📁 Tiến độ theo dự án', noProjects:'Chưa có dự án nào',
@@ -341,7 +358,7 @@
       signOut:'Sign out', loginNotConfigured:'Google Client ID is not configured in the file.',
       sync_expired:'⚠️ Session expired, refreshing...',
       addTask:'+ Add task', sheetBtn:'⚙️ Google Sheet', themeTitle:'Change theme',
-      searchPh:'🔍 Search by name or notes', allStatus:'All statuses', allProjects:'All projects', allSubs:'All sub-projects', subPh:'Sub-project (optional)', repeatLabel:'Repeat', rep_none:'No repeat', rep_daily:'Daily', rep_weekly:'Weekly', rep_monthly:'Monthly',
+      searchPh:'🔍 Search by name or notes', allStatus:'All statuses', allProjects:'All projects', allSubs:'All sub-projects', subPh:'Sub-project (optional)', repeatLabel:'Repeat', dup:'Duplicate', dupSuffix:' (copy)', rep_none:'No repeat', rep_daily:'Daily', rep_weekly:'Weekly', rep_monthly:'Monthly',
       st_todo:'To do', st_doing:'In progress', st_done:'Done',
       pr_high:'High', pr_mid:'Medium', pr_low:'Low', noProject:'Uncategorized',
       projectProgress:'📁 Project progress', noProjects:'No projects yet',
@@ -586,9 +603,8 @@
       const items = list.filter(t => t.status === status);
       $('c' + i).textContent = items.length;
       col.querySelector('.items').innerHTML = items.length ? items.map(t => `
-        <div class="kcard ${isOverdue(t) ? 'overdue' : ''}" draggable="true" data-id="${t.id}"
-             ondragstart="onDragStart(event)">
-          <div class="t">${esc(t.title)}</div>
+        <div class="kcard ${isOverdue(t) ? 'overdue' : ''}" data-id="${t.id}">
+          <div class="t"><span class="drag-handle" draggable="true" ondragstart="onDragStart(event)" title="Kéo để chuyển cột">⠿</span>${esc(t.title)}</div>
           <div class="meta">
             <span class="badge">${esc(pName(projectOf(t)))}</span>${t.subProject ? `<span class="badge">↳ ${esc(t.subProject)}</span>` : ''}
             <span class="badge p-${esc(t.priority)}">${esc(pLabel(t.priority))}</span>${t.repeat ? `<span class="badge">${repLabel(t.repeat)}</span>` : ''}
@@ -598,8 +614,10 @@
           </div>
           ${t.notes ? `<div class="n">${esc(t.notes)}</div>` : ''}
           <div class="actions">
-            <button class="secondary" onclick="startEdit('${t.id}')">${L('edit')}</button>
-            <button class="danger" onclick="removeTask('${t.id}')">${L('del')}</button>
+            <button class="secondary icon-btn" title="${L('edit')}" onclick="startEdit('${t.id}')">✏️</button>
+            <button class="secondary icon-btn" title="${L('dup')}" onclick="duplicateTask('${t.id}')">📄</button>
+            ${t.status !== 'Hoàn thành' ? `<button class="icon-btn ok" title="${L('st_done')}" onclick="changeStatus('${t.id}', 'Hoàn thành')">✅</button>` : ''}
+            <button class="danger icon-btn" title="${L('del')}" onclick="removeTask('${t.id}')">🗑️</button>
           </div>
         </div>`).join('') : `<div class="empty" style="padding:12px">${L('dropHere')}</div>`;
     });
@@ -616,7 +634,7 @@
 
 
   // Kéo thả trên Kanban
-  window.onDragStart = e => e.dataTransfer.setData('text/plain', e.currentTarget.dataset.id);
+  window.onDragStart = e => e.dataTransfer.setData('text/plain', e.currentTarget.closest('.kcard').dataset.id);
   document.querySelectorAll('.col').forEach(col => {
     col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('drop'); });
     col.addEventListener('dragleave', () => col.classList.remove('drop'));
@@ -693,9 +711,9 @@
       return `<div class="g-row">
         <div class="g-label" title="${esc(t.title)}">${esc(t.title)}</div>
         <div class="g-track" style="width:${W}px">
-          <div class="g-bar ${cls}" style="left:${left}px;width:${width}px"
+          <div class="g-bar ${cls}" data-id="${t.id}" style="left:${left}px;width:${width}px"
                title="${esc(t.title)} | ${esc(range)} | ${esc(t.status)}"
-               onclick="startEdit('${t.id}')">${esc(t.title)}</div>
+               onclick="startEdit('${t.id}')"><span class="g-handle l"></span><span class="g-handle r"></span>${esc(t.title)}</div>
         </div>
       </div>`;
     };
@@ -738,6 +756,69 @@
         </div>
       </div>`;
   }
+
+  // ===== KÉO THẢ TRÊN GANTT =====
+  // Kéo giữa thanh: dời cả ngày bắt đầu và hạn chót.
+  // Kéo mép trái / mép phải: đổi ngày bắt đầu / hạn chót.
+  const dayStr = n => new Date(n * 86400000).toISOString().slice(0, 10);
+  let gDrag = null;
+  let suppressClick = false;
+
+  $('gantt').addEventListener('pointerdown', e => {
+    const bar = e.target.closest('.g-bar');
+    if (!bar) return;
+    const t = tasks.find(x => x.id === bar.dataset.id);
+    if (!t) return;
+    const handle = e.target.closest('.g-handle');
+    const mode = handle ? (handle.classList.contains('l') ? 'start' : 'end') : 'move';
+    const s = dayNum(t.startDate || t.deadline);
+    const en = Math.max(s, dayNum(t.deadline || t.startDate));
+    suppressClick = false;
+    gDrag = { id: bar.dataset.id, mode, x0: e.clientX, s, e: en, bar,
+              left: parseFloat(bar.style.left), width: parseFloat(bar.style.width), dx: 0, moved: false };
+    try { bar.setPointerCapture(e.pointerId); } catch (_) {}
+    e.preventDefault();
+  });
+
+  $('gantt').addEventListener('pointermove', e => {
+    if (!gDrag) return;
+    const dx = Math.round((e.clientX - gDrag.x0) / DAY_PX);
+    if (dx === gDrag.dx && !gDrag.moved) return;
+    gDrag.dx = dx;
+    gDrag.moved = gDrag.moved || dx !== 0;
+    const b = gDrag.bar;
+    if (gDrag.mode === 'move') {
+      b.style.left = (gDrag.left + dx * DAY_PX) + 'px';
+    } else if (gDrag.mode === 'start') {
+      const w = Math.max(DAY_PX, gDrag.width - dx * DAY_PX);
+      b.style.left = (gDrag.left + gDrag.width - w) + 'px';
+      b.style.width = w + 'px';
+    } else {
+      b.style.width = Math.max(DAY_PX, gDrag.width + dx * DAY_PX) + 'px';
+    }
+  });
+
+  function endDrag() {
+    if (!gDrag) return;
+    const d = gDrag;
+    gDrag = null;
+    if (!d.moved) return;
+    let ns = d.s, ne = d.e;
+    if (d.mode === 'move') { ns = d.s + d.dx; ne = d.e + d.dx; }
+    else if (d.mode === 'start') { ns = Math.min(d.s + d.dx, d.e); }
+    else { ne = Math.max(d.e + d.dx, d.s); }
+    const now = new Date().toISOString();
+    tasks = tasks.map(t => t.id === d.id ? { ...t, startDate: dayStr(ns), deadline: dayStr(ne), updatedAt: now } : t);
+    suppressClick = true;   // không mở form sửa sau khi vừa kéo xong
+    persist();
+  }
+  $('gantt').addEventListener('pointerup', endDrag);
+  $('gantt').addEventListener('pointercancel', () => { gDrag = null; });
+
+  // Chặn click nhầm sau khi kéo (pha bắt sự kiện để chặn trước khi tới onclick)
+  $('gantt').addEventListener('click', e => {
+    if (suppressClick) { e.stopPropagation(); e.preventDefault(); suppressClick = false; }
+  }, true);
 
   // ===== CÔNG VIỆC LẶP LẠI =====
   // Khi một việc lặp lại được đánh dấu Hoàn thành, tạo sẵn việc cho kỳ tiếp theo
@@ -850,10 +931,44 @@
     persist();
   };
 
-  window.removeTask = id => {
-    if (!confirm(L('confirmDel'))) return;
-    tasks = tasks.filter(t => t.id !== id);
+  // Hộp xác nhận trong trang (không dùng confirm() của trình duyệt, vì một số trình duyệt chặn hộp này)
+  function askConfirm(msg) {
+    return new Promise(resolve => {
+      $('confirmText').textContent = msg;
+      $('confirmModal').style.display = 'flex';
+      const done = v => {
+        $('confirmModal').style.display = 'none';
+        $('confirmYes').onclick = null;
+        $('confirmNo').onclick = null;
+        resolve(v);
+      };
+      $('confirmYes').onclick = () => done(true);
+      $('confirmNo').onclick = () => done(false);
+    });
+  }
+  // Nhân bản: tạo một công việc mới giống hệt (tiêu đề thêm hậu tố), bắt đầu ở trạng thái Chưa làm
+  window.duplicateTask = id => {
+    const t = tasks.find(x => x.id === id);
+    if (!t) return;
+    tasks.push({
+      ...t,
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      title: t.title + L('dupSuffix'),
+      status: 'Chưa làm',
+      updatedAt: new Date().toISOString()
+    });
     persist();
+  };
+
+  window.removeTask = async id => {
+    try {
+      const ok = await askConfirm(L('confirmDel'));
+      if (!ok) return;
+      tasks = tasks.filter(t => t.id !== id);
+      persist();
+    } catch (e) {
+      alert('Lỗi khi xóa: ' + e.message);
+    }
   };
 
   $('saveUrl').onclick = () => {
