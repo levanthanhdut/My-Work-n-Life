@@ -13,7 +13,7 @@
     --primary:#1c1917; --primary-soft:#e7e5e4; --border:#e7e5e4; --danger:#b91c1c;
     --header:#ffffff; --header-text:#1c1917; --surface:#fafaf9; --col:#efeeec; --soft:#f5f5f4;
     --track:#e7e5e4; --input:#ffffff; --shadow:rgba(0,0,0,.06);
-    --btn2:#e7e5e4; --btn2-text:#1c1917; --warn:#f59e0b; --done:#15803d; --todo:#94a3b8;
+    --btn2:#e7e5e4; --btn2-text:#1c1917; --warn:#f59e0b; --done:#15803d; --todo:#78716c;
   }
   /* Các style có thể chọn */
   [data-theme="indigo"] {
@@ -44,6 +44,8 @@
   }
 
   * { box-sizing:border-box; }
+  [data-theme="dark"] { color-scheme:dark; }
+  select option { background:var(--card); color:var(--text); }
   html { -webkit-text-size-adjust:100%; }
   body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
   header { background:var(--header); color:var(--header-text); padding:14px 24px; padding-top:calc(14px + env(safe-area-inset-top)); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-bottom:1px solid var(--border); }
@@ -91,7 +93,7 @@
   .g-head, .g-row { display:flex; }
   .g-head { background:var(--surface); border-bottom:1px solid var(--border); }
   .g-row { height:38px; border-bottom:1px solid var(--border); }
-  .g-label { flex:0 0 220px; width:220px; position:sticky; left:0; z-index:2; background:var(--card); padding:6px 10px; font-size:.85rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; border-right:1px solid var(--border); display:flex; align-items:center; }
+  .g-label { flex:0 0 300px; width:300px; position:sticky; left:0; z-index:2; background:var(--card); padding:6px 10px; font-size:.85rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; border-right:1px solid var(--border); display:flex; align-items:center; }
   .g-head .g-label { background:var(--surface); font-weight:600; color:var(--muted); }
   .g-proj, .g-proj .g-label { background:var(--soft); }
   .g-proj .g-label { font-weight:700; color:var(--primary); }
@@ -102,6 +104,7 @@
   .g-days .we { background:var(--track); }
   .g-bar { position:absolute; top:7px; height:24px; border-radius:7px; color:#fff; font-size:.75rem; line-height:24px; padding:0 6px; overflow:hidden; white-space:nowrap; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,.15); }
   .g-bar:hover { opacity:.85; }
+  .g-bar { text-shadow:0 1px 2px rgba(0,0,0,.35); }
   .b-todo { background:var(--todo); }
   .b-doing { background:var(--primary); }
   .b-done { background:var(--done); }
@@ -124,7 +127,7 @@
   .col h3 span { background:var(--card); border-radius:999px; padding:0 8px; font-size:.8rem; color:var(--muted); }
   .kcard { background:var(--card); border-radius:12px; padding:10px; margin-bottom:8px; box-shadow:0 1px 2px var(--shadow); cursor:grab; border-left:4px solid var(--primary); }
   .kcard.overdue { border-left-color:var(--danger); }
-  .kcard .t { font-weight:600; margin-bottom:6px; overflow-wrap:anywhere; }
+  .kcard .t { font-weight:600; margin-bottom:6px; overflow-wrap:anywhere; word-break:break-word; }
   .kcard .meta { display:flex; gap:6px; flex-wrap:wrap; align-items:center; font-size:.78rem; color:var(--muted); }
   .kcard .n { font-size:.82rem; color:var(--muted); margin-top:6px; white-space:pre-wrap; }
   .kcard .actions { margin-top:8px; display:flex; gap:6px; }
@@ -147,6 +150,7 @@
   /* Responsive: máy tính bảng và điện thoại */
   @media (max-width:800px) { .board { grid-template-columns:1fr; } }
   @media (max-width:640px) {
+    .g-label { flex:0 0 170px; width:170px; }
     header { padding:12px 16px; padding-top:calc(12px + env(safe-area-inset-top)); }
     header h1 { font-size:1.1rem; }
     .hdr-actions { width:100%; }
@@ -478,7 +482,9 @@
       (!fsub || t.subProject === fsub) &&
       (!q || (t.title + ' ' + (t.notes || '') + ' ' + t.project + ' ' + (t.subProject || '')).toLowerCase().includes(q))
     );
-    return list.sort((a, b) => (a.deadline || '9999').localeCompare(b.deadline || '9999'));
+    // Danh sách và Kanban: ưu tiên Cao lên trước, cùng mức thì theo hạn chót
+    const rank = t => ({ 'Cao': 0, 'Trung': 1, 'Thấp': 2 }[t.priority] ?? 3);
+    return list.sort((a, b) => (rank(a) - rank(b)) || (a.deadline || '9999').localeCompare(b.deadline || '9999'));
   }
 
   function isOverdue(t) { return t.deadline && t.deadline < today() && t.status !== 'Hoàn thành'; }
@@ -593,7 +599,7 @@
   });
 
   // ===== GANTT =====
-  const ganttLabelW = () => (window.matchMedia('(max-width:640px)').matches ? 140 : 220); // khớp với CSS .g-label
+  const ganttLabelW = () => (window.matchMedia('(max-width:640px)').matches ? 170 : 300); // khớp với CSS .g-label
   const DAY_PX = 26;           // chiều rộng một ngày trên trục thời gian
   const dayNum = s => Date.parse(s + 'T00:00:00Z') / 86400000;
   const dayToDate = n => new Date(n * 86400000);
