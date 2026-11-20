@@ -1209,6 +1209,7 @@
     const p = decodeJwt(idToken);
     user = { sub: p.sub, email: p.email, name: p.name || p.email };
     tokenExp = p.exp;
+    localStorage.setItem('authSession', JSON.stringify({ idToken, exp: p.exp }));
     // Dữ liệu cũ (lưu trước khi có đăng nhập) được chuyển cho tài khoản đầu tiên đăng nhập
     const legacy = localStorage.getItem('tasks') || localStorage.getItem('tasks_local');
     if (legacy) {
@@ -1223,6 +1224,7 @@
     else if (gsUrl) pullFromSheet();
   }
   function signOut() {
+    localStorage.removeItem('authSession');
     user = null; idToken = null; tokenExp = 0; tasks = [];
     if (window.google) google.accounts.id.disableAutoSelect();
     setSync('sync_local');
@@ -1272,6 +1274,10 @@
   applyI18n();
   $('url').value = gsUrl;
   $('secret').value = syncSecret;
+  if (AUTH_ENABLED) {
+    const saved = JSON.parse(localStorage.getItem('authSession') || 'null');
+    if (saved && saved.exp - 60 > Date.now() / 1000) handleCredential({ credential: saved.idToken });
+  }
   if (!AUTH_ENABLED) {
     user = { sub: 'local', name: 'Local' };
     tasks = JSON.parse(localStorage.getItem(userKey()) || '[]').map(normalize);
