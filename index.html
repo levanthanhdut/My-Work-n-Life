@@ -116,6 +116,8 @@
   .b-doing { background:var(--primary); }
   .b-done { background:var(--done); }
   .b-over { background:var(--danger); }
+  .g-hover { position:absolute; top:0; bottom:0; width:0; border-left:1px dashed var(--primary); z-index:3; pointer-events:none; }
+  .g-hover span { position:absolute; top:2px; left:4px; background:var(--primary); color:#fff; font-size:.7rem; padding:1px 5px; border-radius:4px; white-space:nowrap; }
   .g-today { position:absolute; top:0; bottom:0; width:2px; background:var(--warn); z-index:1; pointer-events:none; }
   .g-body { position:relative; }
   .g-legend { display:flex; gap:12px; flex-wrap:wrap; font-size:.8rem; color:var(--muted); margin-bottom:10px; align-items:center; }
@@ -693,6 +695,7 @@
     const min = Math.min(...items.map(i => i.s), todayN) - 2;
     const max = Math.max(...items.map(i => i.e), todayN) + 2;
     const N = max - min + 1;
+    $('gantt').dataset.min = min;
     const W = N * DAY_PX;
 
     // Header: nhóm theo tháng và ngày
@@ -768,10 +771,34 @@
           <div class="g-body">
             ${rows}
             <div class="g-today" style="left:${todayLeft}px"></div>
+            <div class="g-hover" id="gHover" style="display:none"><span id="gHoverLabel"></span></div>
           </div>
         </div>
       </div>`;
   }
+
+  // ===== ĐƯỜNG DỌC THEO CHUỘT: hiển thị ngày tương ứng =====
+  $('gantt').addEventListener('pointermove', e => {
+    const body = $('gantt').querySelector('.g-body');
+    const hov = $('gHover');
+    if (!body || !hov) return;
+    const rect = body.getBoundingClientRect();
+    const labelW = ganttLabelW();
+    const x = e.clientX - rect.left - labelW;
+    if (x < 0 || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
+      hov.style.display = 'none';
+      return;
+    }
+    const idx = Math.floor(x / DAY_PX);
+    hov.style.display = '';
+    hov.style.left = (labelW + idx * DAY_PX + DAY_PX / 2) + 'px';
+    const parts = dayStr(Number($('gantt').dataset.min) + idx).split('-');
+    $('gHoverLabel').textContent = `${parts[2]}/${parts[1]}/${parts[0]}`;
+  });
+  $('gantt').addEventListener('pointerleave', () => {
+    const hov = $('gHover');
+    if (hov) hov.style.display = 'none';
+  });
 
   // ===== KÉO THẢ TRÊN GANTT =====
   // Kéo giữa thanh: dời cả ngày bắt đầu và hạn chót.
