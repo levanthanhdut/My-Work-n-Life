@@ -635,10 +635,16 @@
     }
     const monthsHtml = monthSegs.map(m => `<div style="width:${m.n * DAY_PX}px">${L('month')(m.key)}</div>`).join('');
 
+    // Sắp xếp: ưu tiên Cao lên trước, cùng mức ưu tiên thì theo ngày bắt đầu
+    const PRIORITY_RANK = { 'Cao': 0, 'Trung': 1, 'Thấp': 2 };
+    const byPriority = (a, b) => ((PRIORITY_RANK[a.priority] ?? 3) - (PRIORITY_RANK[b.priority] ?? 3)) || (a.s - b.s);
+    // Mức ưu tiên cao nhất trong một nhóm (dùng để xếp dự án / sub-project)
+    const topRank = arr => Math.min(...arr.map(t => PRIORITY_RANK[t.priority] ?? 3));
+
     // Nhóm theo dự án, rồi theo sub-project
     const groups = {};
     items.forEach(i => { const p = projectOf(i); (groups[p] = groups[p] || []).push(i); });
-    const names = Object.keys(groups).sort((a, b) => a.localeCompare(b, lang));
+    const names = Object.keys(groups).sort((a, b) => (topRank(groups[a]) - topRank(groups[b])) || a.localeCompare(b, lang));
 
     const taskRow = t => {
       const cls = isOverdue(t) ? 'b-over' : t.status === 'Hoàn thành' ? 'b-done' : t.status === 'Đang làm' ? 'b-doing' : 'b-todo';
@@ -662,14 +668,15 @@
         <div class="g-track" style="width:${W}px"></div>
       </div>`;
       const list = groups[p];
-      list.filter(t => !t.subProject).sort((a, b) => a.s - b.s).forEach(t => { rows += taskRow(t); });
-      const subs = [...new Set(list.map(t => t.subProject).filter(Boolean))].sort((a, b) => a.localeCompare(b, lang));
+      list.filter(t => !t.subProject).sort(byPriority).forEach(t => { rows += taskRow(t); });
+      const subs = [...new Set(list.map(t => t.subProject).filter(Boolean))].sort((a, b) =>
+        (topRank(list.filter(t => t.subProject === a)) - topRank(list.filter(t => t.subProject === b))) || a.localeCompare(b, lang));
       subs.forEach(sb => {
         rows += `<div class="g-row g-sub">
           <div class="g-label">↳ ${esc(sb)}</div>
           <div class="g-track" style="width:${W}px"></div>
         </div>`;
-        list.filter(t => t.subProject === sb).sort((a, b) => a.s - b.s).forEach(t => { rows += taskRow(t); });
+        list.filter(t => t.subProject === sb).sort(byPriority).forEach(t => { rows += taskRow(t); });
       });
     });
 
