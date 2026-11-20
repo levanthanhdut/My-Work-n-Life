@@ -435,7 +435,26 @@
     }
   }
 
-  function persist() { saveLocal(); pushToSheet(); }
+  // Việc "Chưa làm" có ngày bắt đầu từ hôm nay trở về trước sẽ tự chuyển sang "Đang làm"
+  function applyAutoStart() {
+    const now = new Date().toISOString();
+    const todayStr = today();
+    let changed = false;
+    tasks = tasks.map(t => {
+      if (t.status === 'Chưa làm' && t.startDate && t.startDate <= todayStr) {
+        changed = true;
+        return { ...t, status: 'Đang làm', updatedAt: now };
+      }
+      return t;
+    });
+    return changed;
+  }
+
+  function persist() {
+    applyAutoStart();
+    saveLocal();
+    pushToSheet();
+  }
 
   async function pullFromSheet() {
     if (!user) return;
@@ -451,7 +470,9 @@
       // Sheet trống nhưng máy đang có dữ liệu (lần đầu đăng nhập): đẩy dữ liệu lên thay vì xóa
       if (!remote.length && tasks.length) { await pushToSheet(); return; }
       tasks = remote;
+      const moved = applyAutoStart();
       saveLocal();
+      if (moved) pushToSheet();
       setSync('loaded', tasks.length);
     } catch (e) {
       setSync('loadErr', e.message);
@@ -615,8 +636,10 @@
   const dayToDate = n => new Date(n * 86400000);
 
   function renderGantt(list) {
-    const dated = list.filter(t => t.startDate || t.deadline);
-    const undated = list.length - dated.length;
+    // Việc lặp lại không hiển thị trong Gantt (vẫn có trong Kanban và danh sách)
+    const plain = list.filter(t => !t.repeat);
+    const dated = plain.filter(t => t.startDate || t.deadline);
+    const undated = plain.length - dated.length;
     $('noDateNote').textContent = undated ? L('noDate')(undated) : '';
 
     if (!dated.length) {
@@ -967,6 +990,7 @@
   if (!AUTH_ENABLED) {
     user = { sub: 'local', name: 'Local' };
     tasks = JSON.parse(localStorage.getItem(userKey()) || '[]').map(normalize);
+    applyAutoStart();
   }
   updateAuthUI();
   render();
