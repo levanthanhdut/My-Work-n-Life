@@ -346,7 +346,7 @@
   // Thay bằng OAuth Client ID của bạn (xem hướng dẫn)
   const GOOGLE_CLIENT_ID = '984571350968-84ffk1pdr3m1vu8jq1arc56ckgcl2mso.apps.googleusercontent.com';
   // false: dùng chế độ cục bộ, không cần đăng nhập và không đồng bộ Sheet. true: bật đăng nhập Google
-  const AUTH_ENABLED = false;
+  const AUTH_ENABLED = true;
 
   // ===== ĐA NGÔN NGỮ =====
   // Giá trị lưu trong Sheet (Chưa làm, Cao, ...) luôn giữ nguyên tiếng Việt; chỉ phần hiển thị đổi theo ngôn ngữ.
@@ -1210,10 +1210,11 @@
     user = { sub: p.sub, email: p.email, name: p.name || p.email };
     tokenExp = p.exp;
     // Dữ liệu cũ (lưu trước khi có đăng nhập) được chuyển cho tài khoản đầu tiên đăng nhập
-    const legacy = localStorage.getItem('tasks');
+    const legacy = localStorage.getItem('tasks') || localStorage.getItem('tasks_local');
     if (legacy) {
       if (!localStorage.getItem(userKey())) localStorage.setItem(userKey(), legacy);
       localStorage.removeItem('tasks');
+      localStorage.removeItem('tasks_local');
     }
     tasks = JSON.parse(localStorage.getItem(userKey()) || '[]').map(normalize);
     updateAuthUI();
