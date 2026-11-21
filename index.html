@@ -242,6 +242,7 @@
         <span><i style="background:#16a34a"></i><span data-i18n="st_done"></span></span>
         <span><i style="background:var(--danger)"></i><span data-i18n="legendOver"></span></span>
         <span><i style="background:#f59e0b"></i><span data-i18n="legendToday"></span></span>
+        <label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="showDone"><span data-i18n="showDone"></span></label>
         <span id="noDateNote"></span>
       </div>
       <div id="gantt"></div>
@@ -342,7 +343,7 @@
       signOut:'Đăng xuất', loginNotConfigured:'Chưa cấu hình Google Client ID trong file.',
       sync_expired:'⚠️ Phiên đăng nhập đã hết hạn, đang làm mới...',
       addTask:'+ Thêm công việc', reloadBtn:'🔄 Tải lại từ Sheet', themeTitle:'Đổi giao diện',
-      searchPh:'🔍 Tìm theo tên hoặc ghi chú', allStatus:'Tất cả trạng thái', allProjects:'Tất cả dự án', allSubs:'Tất cả sub-project', subPh:'Sub-project (tùy chọn)', repeatLabel:'Lặp lại', dup:'Nhân bản', dupSuffix:' (bản sao)', rep_none:'Không lặp', rep_daily:'Hàng ngày', rep_weekly:'Hàng tuần', rep_monthly:'Hàng tháng', rep_wdays:'Hàng tuần theo thứ', dayErr:'Hãy chọn ít nhất một ngày trong tuần',
+      searchPh:'🔍 Tìm theo tên hoặc ghi chú', allStatus:'Tất cả trạng thái', allProjects:'Tất cả dự án', allSubs:'Tất cả sub-project', subPh:'Sub-project (tùy chọn)', repeatLabel:'Lặp lại', dup:'Nhân bản', showDone:'Hiện việc đã xong', dupSuffix:' (bản sao)', rep_none:'Không lặp', rep_daily:'Hàng ngày', rep_weekly:'Hàng tuần', rep_monthly:'Hàng tháng', rep_wdays:'Hàng tuần theo thứ', dayErr:'Hãy chọn ít nhất một ngày trong tuần',
       st_todo:'Chưa làm', st_doing:'Đang làm', st_done:'Hoàn thành',
       pr_high:'Cao', pr_mid:'Trung', pr_low:'Thấp', noProject:'Chưa phân loại',
       projectProgress:'📁 Tiến độ theo dự án', noProjects:'Chưa có dự án nào',
@@ -375,7 +376,7 @@
       signOut:'Sign out', loginNotConfigured:'Google Client ID is not configured in the file.',
       sync_expired:'⚠️ Session expired, refreshing...',
       addTask:'+ Add task', reloadBtn:'🔄 Reload from Sheet', themeTitle:'Change theme',
-      searchPh:'🔍 Search by name or notes', allStatus:'All statuses', allProjects:'All projects', allSubs:'All sub-projects', subPh:'Sub-project (optional)', repeatLabel:'Repeat', dup:'Duplicate', dupSuffix:' (copy)', rep_none:'No repeat', rep_daily:'Daily', rep_weekly:'Weekly', rep_monthly:'Monthly', rep_wdays:'Weekly on days', dayErr:'Please select at least one weekday',
+      searchPh:'🔍 Search by name or notes', allStatus:'All statuses', allProjects:'All projects', allSubs:'All sub-projects', subPh:'Sub-project (optional)', repeatLabel:'Repeat', dup:'Duplicate', showDone:'Show completed', dupSuffix:' (copy)', rep_none:'No repeat', rep_daily:'Daily', rep_weekly:'Weekly', rep_monthly:'Monthly', rep_wdays:'Weekly on days', dayErr:'Please select at least one weekday',
       st_todo:'To do', st_doing:'In progress', st_done:'Done',
       pr_high:'High', pr_mid:'Medium', pr_low:'Low', noProject:'Uncategorized',
       projectProgress:'📁 Project progress', noProjects:'No projects yet',
@@ -682,7 +683,7 @@
 
   function renderGantt(list) {
     // Việc lặp lại đã hoàn thành được ẩn khỏi Gantt (Kanban và danh sách vẫn hiển thị đầy đủ)
-    const plain = list.filter(t => !(t.repeat && t.status === 'Hoàn thành'));
+    const plain = list.filter(t => $('showDone').checked || t.status !== 'Hoàn thành');
     const dated = plain.filter(t => t.startDate || t.deadline);
     const undated = plain.length - dated.length;
     $('noDateNote').textContent = undated ? L('noDate')(undated) : '';
@@ -1121,6 +1122,11 @@
   };
 
   $('reloadBtn').onclick = pullFromSheet;
+  $('showDone').checked = localStorage.getItem('showDone') === '1';
+  $('showDone').onchange = () => {
+    localStorage.setItem('showDone', $('showDone').checked ? '1' : '0');
+    render();
+  };
   $('search').oninput = render;
   $('filterStatus').onchange = render;
   $('filterProject').onchange = () => { $('filterSub').value = ''; render(); };
